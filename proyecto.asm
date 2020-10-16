@@ -20,8 +20,10 @@ include macros.asm
 	password        db 10 dup('$')                                                                                                                                                 	;
 	adminUser       db 'adminAI','$'
 	adminPass       db '4321', '$'
-	listaUsuarios   db 3000 dup('$')
-	auxUser         db 100 dup('$')
+	listaUsuarios   db 300 dup('$')
+	listaPunteos    db 500 dup('$')
+	auxCadena       db 100 dup('$')
+	puntajes        dw 200 dup('$')
 
 
 	date            db '00/00/0000'

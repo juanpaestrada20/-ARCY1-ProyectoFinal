@@ -348,13 +348,23 @@ endm
 ;leemos los archivos que cargaran los datos a nuestra aplicacion
 lecturaArchivos macro
 	; limpiamos nuestro buffer de lectura
-	                clean     bufferLectura, SIZEOF bufferLectura
+	                clean      bufferLectura, SIZEOF bufferLectura
 	; iniciamos leyendo los usuarios
-	                openFile  rutaUsuarios, handleFichero
-	                readFile  SIZEOF bufferLectura, bufferLectura, handleFichero
-	                closeFile handleFichero
+	                openFile   rutaUsuarios, handleFichero
+	                readFile   SIZEOF bufferLectura, bufferLectura, handleFichero
+	                closeFile  handleFichero
 	; ya con los usuarios iniciamos a la separacion
-	                readUsers bufferLectura
+	                readUsers  bufferLectura
+	; limpiamos nuestro buffer de lectura
+	                clean      bufferLectura, SIZEOF bufferLectura
+	; iniciamos leyendo los puntajes
+	                openFile   rutaPunteos, handleFichero
+	                readFile   SIZEOF bufferLectura, bufferLectura, handleFichero
+	                closeFile  handleFichero
+	; ya con los puntajes leidos procedemos a almacenarlos
+	                readPoints bufferLectura
+	; finalizamos con la carga inicial
+					
 endm
 
 ;Lectura de usuarios
@@ -362,7 +372,7 @@ readUsers macro buffer
 	          LOCAL       GETUSER, INCREMENT, CONTINUE, END
 	          xor         si, si
 	          xor         di, di
-	          clean       auxUser, SIZEOF auxUser
+	          clean       auxCadena, SIZEOF auxCadena
 
 	;recorremos caracter por caracter la entrada
 	GETUSER:  
@@ -373,10 +383,10 @@ readUsers macro buffer
 	          je          END
 	; si no es final de cadena, vemos si ya finalizamos de obtener el usuario
 	          cmp         bl, ';'
-	; si cumple continuamos a separar usuario y contrasena
+	; si cumple continuamos a guardar el dato
 	          je          CONTINUE
 	; si no es ninguno de los anteriores vamos guardando la cadena
-	          mov         auxUser[di], bl
+	          mov         auxCadena[di], bl
 	; continuamos a incrementar nuestros contadores
 	          jmp         INCREMENT
 
@@ -388,18 +398,13 @@ readUsers macro buffer
 	          jmp         GETUSER
 
 	CONTINUE: 
-	; enviamos el usuario y contrasena a separar y almacenar a nuestra lista
-	          print       auxUser
-	          getChar
 	; guardamos nuestros registros en la pila
 	          pushRecords
 	; guardamos el usuario y contrasena
-	          saveOnArray auxUser, listaUsuarios
+	          saveOnArray auxCadena, listaUsuarios
 	; agregamos suparador a la lista
 	          mov         bl, '%'
 	          mov         listaUsuarios[di], '%'
-	          print       listaUsuarios
-	          getChar
 	; recuperamos nuestros registros
 	          popRecords
 	; incrementamos si para saltar el caracter ';' , el salto de linea y retorno de carro
@@ -407,7 +412,7 @@ readUsers macro buffer
 	          inc         si
 	          inc         si
 	; limpiamos nuestra variable auxiliar y el indice que utilizamos con este
-	          clean       auxUser, SIZEOF auxUser
+	          clean       auxCadena, SIZEOF auxCadena
 	          xor         di, di
 	;continuamos con el analisis de la carga
 	          jmp         GETUSER
@@ -417,12 +422,60 @@ readUsers macro buffer
 
 endm
 
-; separacion de usuario y contrasena
-; la estructura que separamos es usuario:constrasena
-separate macro buffer
-	         LOCAL U
+;lectura de puntajes
+readPoints macro buffer
+	           LOCAL       GETRECORD, CONTINUE, INCREMENT, END
+	;limpiamos registros que utilizaremos de indices
+	           xor         si, si
+	           xor         di, di
+	           clean       auxCadena, SIZEOF auxCadena
+	; limpiamos variable auxiliar
+	GETRECORD: 
+	           mov         bl, buffer[si]
+	; comparamos si hemos llegado al fin de cadena
+	           cmp         bl, '$'
+	; si es el final terminamos de analizar
+	           je          END
+	; si no es final de cadena, vemos si ya finalizamos de obtener el resultado
+	           cmp         bl, ';'
+	; si cumple continuamos a almacenar el dato obtenido
+	           je          CONTINUE
+	; si no es ninguno de los anteriores vamos guardando la cadena
+	           mov         auxCadena[di], bl
+	; continuamos a incrementar nuestros contadores
+	           jmp         INCREMENT
 
+	INCREMENT: 
+	; incrementamos los indices que estamos utilizando
+	           inc         si
+	           inc         di
+	; regresamos para obtener el usuario
+	           jmp         GETRECORD
+
+	CONTINUE:  
+	; guardamos nuestros registros en la pila
+	           pushRecords
+	; guardamos el usuario y contrasena
+	           saveOnArray auxCadena, listaPunteos
+	; agregamos suparador a la lista
+	           mov         bl, '%'
+	           mov         listaPunteos[di], '%'
+	; recuperamos nuestros registros
+	           popRecords
+	; incrementamos si para saltar el caracter ';' , el salto de linea y retorno de carro
+	           inc         si
+	           inc         si
+	           inc         si
+	; limpiamos nuestra variable auxiliar y el indice que utilizamos con este
+	           clean       auxCadena, SIZEOF auxCadena
+	           xor         di, di
+	;continuamos con el analisis de la carga
+	           jmp         GETRECORD
+
+	END:       
+	; esta es nuestra etiqueta de salida por lo cual no hacemos nada
 endm
+
 ; VERIFICACION DE USUARIO Y CONTASEÑA
 
 ;verificacion de usuario 
@@ -449,5 +502,11 @@ verifyUser macro user
 
 	ERRORSIZE: 
 	
+
+endm
+; separacion de usuario y contrasena
+; la estructura que separamos es usuario:constrasena
+separate macro buffer
+	         LOCAL U
 
 endm
