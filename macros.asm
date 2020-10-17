@@ -477,33 +477,156 @@ readPoints macro buffer
 endm
 
 ; VERIFICACION DE USUARIO Y CONTASEÑA
-
 ;verificacion de usuario 
 verifyUser macro user
-	           LOCAL RECORRER, VALIDAR, ERRORSIZE, EXISTENCIA , SALIR
-	           xor   si, si
-	           xor   cx, cx
-
+	           LOCAL     RECORRER, VALIDAR, ERRORSIZE, EXISTENCIA , SALIR, ERROR, ADMIN
+	; Limpiamos los registros que utilizaremos
+	           xor       si, si
+	           xor       di, di
+	           xor       cx, cx
+	; contaremos la cantidad de caracteres que se han ingresado
 	RECORRER:  
-	           mov   bl, user[si]
-	           cmp   bl, '$'
-	           je    VALIDAR
-	           inc   si
-	           jmp   RECORRER
+	           mov       bl, user[si]
+	           cmp       bl, '$'
+	; si llegamos al fin de cadena verificamos cuantos caracteres fueron contados
+	           je        VALIDAR
+	           inc       si
+	           jmp       RECORRER
 
 	VALIDAR:   
-	           cmp   si, 7
-	           jg    ERRORSIZE
-	           jmp   EXISTENCIA
+	; si el registro si >= 7 significa que ingreso 8 o mas caracteres
+	           cmp       si, 7
+	; error de tamaño
+	           jg        ERRORSIZE
+	; si cumple con el tamaño verificamos que no exista el usuario
+	           jmp       EXISTENCIA
 	
 	EXISTENCIA:
-	; SI EXISTE
-	;jne
-
+	; enviamos a comparar el usuario con los ya existentes
+	           userExist user
+	; como primera instancia vemos si el usuario no es igual que el admin
+	           xor       si, si
+	           cmp       bl, 'Y'
+	           je        ERROR
+	           jmp       ADMIN
 	ERRORSIZE: 
+	           print     msmError5
+	           jmp       RegistroSesion
+
+	ERROR:     
+	           print     msmError6
+	           jmp       RegistroSesion
+
+	ADMIN:     
+	           xor       si,si
+	           xor       di, di
+	           xor       cx, cx
+	           mov       cx, 8
+	           lea       si, adminUser
+	           lea       di, user
+	           repe      cmpsb
+	           je        ERROR
+	           jmp       SALIR
 	
+	SALIR:     
 
 endm
+
+; Verifico que no exita el nombre de usuario que dio el usuario
+userExist macro user
+	           LOCAL GETLIST, INCREMENT, COMPARE, EQUALS, NEXT, END, ACCEPTED, INCREMENT2
+	; limpio los registros que utilizare
+	           xor   si, si
+	           xor   di, di
+	           xor   bx, bx
+
+	GETLIST:   
+	           mov   bl, listaUsuarios[si]
+	; comparo si es el separador entre usuarios
+	           cmp   bl, ':'
+	; si lo es me dirijo a comparar el usuario
+	           je    COMPARE
+	; sino compara si es el fin de cadena
+	           cmp   bl, '$'
+	; si llega aca significa que no existe el usuario
+	           je    ACCEPTED
+	; si no es ninguno continuo a almacenar a una variable axiliar para luego separar
+	           mov   auxCadena[di], bl
+	; vamos a incementar los registros
+	           jmp   INCREMENT
+
+	INCREMENT: 
+	; incrementamos los indices que estamos utilizando
+	           inc   si
+	           inc   di
+	           jmp   GETLIST
+
+	COMPARE:   
+	; guardamos el indice que usamos en la lsita de usuarios
+	           push  si
+	; cantidad de caracteres a comparar
+	           xor   cx, cx
+	           mov   cx, di
+	           mov   ax, ds
+	           mov   es, ax
+	; limpiamos los registros para realizar la comparacion
+	           xor   si, si
+	           xor   di, di
+	; enviamos las cadenas a comparar
+	           lea   si, user
+	           lea   di, auxCadena
+	; realizamos la comparacion
+	           repe  cmpsb
+	; si es igual  nos vamos a EQUALS
+	           je    EQUALS
+	; terminasmos de comparar las cadenas y recuperamos el valor de si
+	           pop   si
+	; si no es igual salteamos la contasena
+	           jmp   NEXT
+
+	EQUALS:    
+	; terminasmos de comparar las cadenas y recuperamos el valor de si
+	           pop   si
+	; seteamos en bl para indicar que si existe ese usuario
+	           mov   bl, 'Y'
+	; salimos de la macro
+	           jmp   END
+
+	NEXT:      
+	; limpio lo que necesitara para almacenar un nuevo usario
+	           xor   di, di
+	           clean auxCadena, SIZEOF auxCadena
+	           mov   bl, listaUsuarios[si]
+	; si encuento '%' ya puedo buscar otro usuaria
+	           cmp   bl, '%'
+	           je    INCREMENT2
+	           inc   si
+	; contiunuamos a obtener el siguiente usuario a comparar
+	           jmp   NEXT
+
+	INCREMENT2:
+	; nos salteamos '%'
+	           inc   si
+	           jmp   GETLIST
+
+	ACCEPTED:  
+	; setamos N a bl para indicar que no existe el usuario ingresado
+	           mov   bl, 'N'
+	           jmp   END
+
+	END:       
+
+endm
+
+; agregamo el nuevo usuario con su contraseña
+addNewUser macro user, pass
+	           print   user
+	           print   salto
+	           print   pass
+	           getChar
+endm
+
+
 ; separacion de usuario y contrasena
 ; la estructura que separamos es usuario:constrasena
 separate macro buffer

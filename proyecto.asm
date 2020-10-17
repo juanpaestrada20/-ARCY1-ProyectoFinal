@@ -39,7 +39,8 @@ include macros.asm
 	msmError2       db 0ah,0dh,'Error al leer archivo','$'
 	msmError3       db 0ah,0dh,'Error al crear archivo','$'
 	msmError4       db 0ah,0dh,'Error al escribir archivo','$'
-	msmError5       db 0ah,0dh,'Comando no reconocido','$'
+	msmError5       db 0ah,0dh,'Debe ser a lo mucho 7 caracteres','$'
+	msmError6       db 0ah,0dh,'El usuario ya existe','$'
 	rutaArchivo     db 100 dup('$')
 	rutaUsuarios    db 'users.txt', 00h
 	rutaPunteos     db 'users.log', 00h
@@ -80,12 +81,16 @@ include macros.asm
 			print aunNo
 			jmp Menu
 		RegistroSesion:
+			clean usuario, SIZEOF usuario
 			print newUser
             getText usuario
-            verifyUser newUser
+            verifyUser usuario
             ;comparar si el usuario esta correcto
+			jmp Contra
+		Contra:
 			print newPass
             getText password
+			addNewUser usuario, password
             clean usuario, SIZEOF usuario
             clean password, SIZEOF password
 			jmp Menu
