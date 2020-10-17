@@ -10,7 +10,7 @@ include macros.asm
 0ah,0dh,'SECCION A',0ah,0dh,'Proyecto 2','$'
 	datos           db 0ah,0dh, 09h, 09h, 'JUAN PABLO ESTRADA ALEMAN', 0ah,0dh, 09h, 09h, 09h, '201800709',0ah,0dh,'$'
 	inicioRegisto   db 0ah,0dh, '1) INGRESAR',0ah,0dh,'2) REGISTRARSE',0ah,0dh,'3) SALIR',0ah,0dh,'$'
-	eligaop         db 0ah, 0dh, 'Elija una opcion: ', '$'
+	eligaop         db 0ah, 0dh, 'Elija una opcion: ', 0ah, 0dh, '$'
 	salto           db 0ah, 0dh , '$'
 	
 	;================ USUARIOS ========================
@@ -43,6 +43,8 @@ include macros.asm
 	msmError6       db 0ah,0dh,'El usuario ya existe','$'
 	msmError7       db 0ah,0dh,'La contrasena debe contener solo numeros','$'
 	msmError8       db 0ah,0dh,'La contrasena debe ser de 4 numeros','$'
+	msmError9       db 0ah,0dh,'El usuario no existe','$'
+	msmError10      db 0ah,0dh,'Contrasena incorrecta','$'
 	rutaArchivo     db 100 dup('$')
 	rutaUsuarios    db 'users.txt', 00h
 	rutaPunteos     db 'users.log', 00h
@@ -62,9 +64,9 @@ include macros.asm
 	main proc 
 			MOV ax, @data ; obtenemos lo que esta en el segmento de data y lo movemos a ax
 			MOV ds, ax  ; enviamos toda la data a ds y asi se puede acceder a las variables
+            lecturaArchivos
 
 		Menu:
-            lecturaArchivos
             print linea
             print encab
             print datos
@@ -81,7 +83,13 @@ include macros.asm
 			je Salir
 			jmp Menu
 		IniciarSesion:
-			print aunNo
+			clean usuario, SIZEOF usuario
+			clean password, SIZEOF password
+			print newUser
+            getText usuario
+			print newPass
+            getText password
+			login usuario, password
 			jmp Menu
 		RegistroSesion:
 			clean usuario, SIZEOF usuario
@@ -98,6 +106,10 @@ include macros.asm
 			addNewUser usuario, password
             clean usuario, SIZEOF usuario
             clean password, SIZEOF password
+			jmp Menu
+		AdminMenu:
+			print aunNo
+			print entra
 			jmp Menu
 		Salir: 
 			MOV ah,4ch 

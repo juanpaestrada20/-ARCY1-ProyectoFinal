@@ -658,7 +658,7 @@ verifyPass macro pass
 
 endm
 
-; agregamo el nuevo usuario con su contraseña
+; agregamos el nuevo usuario con su contraseña
 addNewUser macro user, pass
 	; guardamos nuestros registros en la pila
 	           pushRecords
@@ -678,7 +678,76 @@ addNewUser macro user, pass
 	           print       listaUsuarios
 endm
 
+;para hacer el login verificamos si existe el usuario o es el admin
 login macro user, pass
-	      LOCAL SEARCH, COMPARE
+	            LOCAL     SEARCH, CONTRA, ADMIN, ADMINCONTRA,NOUSER, COMPARE, WRONGPASS, access
+	            xor       si, si
+	            xor       di, di
+	            clean     auxCadena, SIZEOF auxCadena
+
+	SEARCH:     
+	            userExist user
+	            xor       di, di
+	            clean     auxCadena, SIZEOF auxCadena
+	            cmp       bl, 'Y'
+	            je        CONTRA
+	            jmp       ADMIN
+
+	ADMIN:      
+	            xor       si,si
+	            xor       di, di
+	            xor       cx, cx
+	            mov       cx, 8
+	            lea       si, adminUser
+	            lea       di, user
+	            repe      cmpsb
+	            je        ADMINCONTRA
+	            jmp       NOUSER
+
+	CONTRA:     
+	            inc       si
+	            mov       bl, listaUsuarios[si]
+	            cmp       bl , '%'
+	            je        COMPARE
+	            mov       auxCadena[di], bl
+	            inc       di
+	            jmp       CONTRA
+	          
+	NOUSER:     
+	            print     msmError9
+	            print     salto
+	            jmp       Menu
+
+	ADMINCONTRA:
+	            xor       si,si
+	            xor       di, di
+	            xor       cx, cx
+	            mov       cx, 5
+	            lea       si, adminPass
+	            lea       di, pass
+	            repe      cmpsb
+	            je        AdminMenu
+	            jmp       WRONGPASS
+
+	COMPARE:    
+	            xor       si,si
+	            xor       di, di
+	            xor       cx, cx
+	            mov       cx, 5
+	            lea       si, auxCadena
+	            lea       di, pass
+	            repe      cmpsb
+	            je        ACCESS
+	            jmp       WRONGPASS
+
+	WRONGPASS:  
+	            print     msmError10
+	            print     salto
+	            jmp       IniciarSesion
+
+	ACCESS:     
+	            print     aunNo
+	            getChar
+	            jmp       Menu
 endm
 
