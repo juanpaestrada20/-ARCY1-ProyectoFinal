@@ -686,39 +686,53 @@ login macro user, pass
 	            clean     auxCadena, SIZEOF auxCadena
 
 	SEARCH:     
+	; verificamos que el usuario exista
 	            userExist user
+	; limpiamos lo que usaremos para obtener contraseña
 	            xor       di, di
 	            clean     auxCadena, SIZEOF auxCadena
+	; si existe el usurio bl contendra 'Y' y sino contrndra 'N'
 	            cmp       bl, 'Y'
+	; pasamos a buscar la contraseña del usuario
 	            je        CONTRA
+	; si no se encuentra el usuario vemos si es el usuario del administrador
 	            jmp       ADMIN
 
 	ADMIN:      
+	; limpiamos los registros para comparar
 	            xor       si,si
 	            xor       di, di
 	            xor       cx, cx
+	; colocamos la contidad de caracteres a comparar
 	            mov       cx, 8
 	            lea       si, adminUser
 	            lea       di, user
 	            repe      cmpsb
+	; si es el usuario pasamos a comparar
 	            je        ADMINCONTRA
+	; si no es el admin mandamos error de usuario que no existe
 	            jmp       NOUSER
-
+	
+	; recorremos la lista para obtener la contraseña
 	CONTRA:     
 	            inc       si
 	            mov       bl, listaUsuarios[si]
+	; verificamos si terminamos de recuperar la contraseña
 	            cmp       bl , '%'
+	; nos vamos a comparar contraseña
 	            je        COMPARE
 	            mov       auxCadena[di], bl
 	            inc       di
 	            jmp       CONTRA
 	          
 	NOUSER:     
+	;si no existe el usuario enviamos mensaje y regresamos al menu
 	            print     msmError9
 	            print     salto
 	            jmp       Menu
 
 	ADMINCONTRA:
+	; limpiamos registros para la comparacion
 	            xor       si,si
 	            xor       di, di
 	            xor       cx, cx
@@ -726,21 +740,26 @@ login macro user, pass
 	            lea       si, adminPass
 	            lea       di, pass
 	            repe      cmpsb
+	; si es el admin nos dirigimos al menu del administrador
 	            je        AdminMenu
 	            jmp       WRONGPASS
 
 	COMPARE:    
+	; limpiamos registros para la comparacion
 	            xor       si,si
 	            xor       di, di
 	            xor       cx, cx
+	; la cantidad de caracteres a comparar es 5
 	            mov       cx, 5
 	            lea       si, auxCadena
 	            lea       di, pass
 	            repe      cmpsb
+	; si la conntraseña del usuario coincide con la del usuario accedemos al juego
 	            je        ACCESS
 	            jmp       WRONGPASS
 
 	WRONGPASS:  
+	; usuario valido pero contraseña incorrecta
 	            print     msmError10
 	            print     salto
 	            jmp       IniciarSesion

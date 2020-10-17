@@ -25,6 +25,8 @@ include macros.asm
 	auxCadena       db 100 dup('$')
 	puntajes        dw 200 dup('$')
 
+	;================ MENU ADMIN ========================
+	opcionAdmin     db 0ah,0dh, '1) TOP 10 PUNTOS',0ah,0dh,'2) TOP 10 TIEMPOS',0ah,0dh,'3) SALIR',0ah,0dh,'$'
 
 	date            db '00/00/0000'
 	hour            db '00:00:00'
@@ -108,9 +110,26 @@ include macros.asm
             clean password, SIZEOF password
 			jmp Menu
 		AdminMenu:
+			print linea
+			print opcionAdmin 
+			print linea
+			print eligaop
+			getChar
+			cmp al,49
+			je TopPuntos
+			cmp al,50
+			je TopTiempo
+			cmp al,51
+			je Menu
+			jmp AdminMenu
+		TopPuntos:
 			print aunNo
-			print entra
-			jmp Menu
+			getChar
+			jmp AdminMenu
+		TopTiempo:
+			print aunNo
+			getChar
+			jmp AdminMenu
 		Salir: 
 			MOV ah,4ch 
 			int 21h
