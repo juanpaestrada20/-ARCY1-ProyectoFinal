@@ -404,7 +404,7 @@ readUsers macro buffer
 	          saveOnArray auxCadena, listaUsuarios
 	; agregamos suparador a la lista
 	          mov         bl, '%'
-	          mov         listaUsuarios[di], '%'
+	          mov         listaUsuarios[di], bl
 	; recuperamos nuestros registros
 	          popRecords
 	; incrementamos si para saltar el caracter ';' , el salto de linea y retorno de carro
@@ -618,18 +618,67 @@ userExist macro user
 
 endm
 
+;verificamos que la contraseña sean solo numeros
+verifyPass macro pass
+	           LOCAL RECORRER, INCORRECT, END, COMPARE, ERROR
+	           xor   si, si
+	           xor   di, di
+
+	; recorremos caracter por caracter  para verificar que solo sean numeros
+	RECORRER:  
+	           mov   bl, pass[si]
+	; verificamos que sea el fin de cadena
+	           cmp   bl, '$'
+	           je    COMPARE
+	; comparamos que no sea menor que el ascii de '0'
+	           cmp   bl, '0'
+	           jl    INCORRECT
+	; comparamos que no sea mayor que el ascii de '9'
+	           cmp   bl, '9'
+	           jg    INCORRECT
+	           inc   si
+	           jmp   RECORRER
+
+	INCORRECT: 
+	           print msmError7
+	           print salto
+	           jmp   Contra
+
+	COMPARE:   
+	           cmp   si, 4
+	           je    END
+	           jmp   ERROR
+
+	ERROR:     
+	           print msmError8
+	           print salto
+	           jmp   Contra
+	
+	END:       
+
+endm
+
 ; agregamo el nuevo usuario con su contraseña
 addNewUser macro user, pass
-	           print   user
-	           print   salto
-	           print   pass
-	           getChar
+	; guardamos nuestros registros en la pila
+	           pushRecords
+	; guardamos el usuario
+	           saveOnArray user, listaUsuarios
+	; agregamos suparador de usuario
+	           mov         bl, ':'
+	           mov         listaUsuarios[di], bl
+	; guardamos el usuario
+	           saveOnArray pass, listaUsuarios
+	; agregamos suparador de usuario y contra
+	           mov         bl, '%'
+	           mov         listaUsuarios[di], bl
+	; recuperamos nuestros registros
+	           popRecords
+
+	           print       listaUsuarios
 endm
 
-
-; separacion de usuario y contrasena
-; la estructura que separamos es usuario:constrasena
-separate macro buffer
-	         LOCAL U
-
+login macro user, pass
+	      LOCAL SEARCH, COMPARE
 endm
+

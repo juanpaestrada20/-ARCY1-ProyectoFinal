@@ -41,6 +41,8 @@ include macros.asm
 	msmError4       db 0ah,0dh,'Error al escribir archivo','$'
 	msmError5       db 0ah,0dh,'Debe ser a lo mucho 7 caracteres','$'
 	msmError6       db 0ah,0dh,'El usuario ya existe','$'
+	msmError7       db 0ah,0dh,'La contrasena debe contener solo numeros','$'
+	msmError8       db 0ah,0dh,'La contrasena debe ser de 4 numeros','$'
 	rutaArchivo     db 100 dup('$')
 	rutaUsuarios    db 'users.txt', 00h
 	rutaPunteos     db 'users.log', 00h
@@ -49,6 +51,7 @@ include macros.asm
 	handleFichero   dw ?
 
 	aunNo           db 'Metodo no implementado' , '$'
+	varAux          dw 0
 
 	; ============================ VARIABLES REPORTE ============================
 	
@@ -84,12 +87,14 @@ include macros.asm
 			clean usuario, SIZEOF usuario
 			print newUser
             getText usuario
+            ;comparar si el usua esta correcto
             verifyUser usuario
-            ;comparar si el usuario esta correcto
 			jmp Contra
 		Contra:
+			clean password, SIZEOF password
 			print newPass
             getText password
+			verifyPass password
 			addNewUser usuario, password
             clean usuario, SIZEOF usuario
             clean password, SIZEOF password
