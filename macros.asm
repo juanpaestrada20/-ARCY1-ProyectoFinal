@@ -680,93 +680,240 @@ endm
 
 ;para hacer el login verificamos si existe el usuario o es el admin
 login macro user, pass
-	            LOCAL     SEARCH, CONTRA, ADMIN, ADMINCONTRA,NOUSER, COMPARE, WRONGPASS, access
-	            xor       si, si
-	            xor       di, di
-	            clean     auxCadena, SIZEOF auxCadena
+	            LOCAL      SEARCH, CONTRA, ADMIN, ADMINCONTRA,NOUSER, COMPARE, WRONGPASS, ACCESS, ORDER
+	            xor        si, si
+	            xor        di, di
+	            clean      auxCadena, SIZEOF auxCadena
 
 	SEARCH:     
 	; verificamos que el usuario exista
-	            userExist user
+	            userExist  user
 	; limpiamos lo que usaremos para obtener contraseña
-	            xor       di, di
-	            clean     auxCadena, SIZEOF auxCadena
+	            xor        di, di
+	            clean      auxCadena, SIZEOF auxCadena
 	; si existe el usurio bl contendra 'Y' y sino contrndra 'N'
-	            cmp       bl, 'Y'
+	            cmp        bl, 'Y'
 	; pasamos a buscar la contraseña del usuario
-	            je        CONTRA
+	            je         CONTRA
 	; si no se encuentra el usuario vemos si es el usuario del administrador
-	            jmp       ADMIN
+	            jmp        ADMIN
 
 	ADMIN:      
 	; limpiamos los registros para comparar
-	            xor       si,si
-	            xor       di, di
-	            xor       cx, cx
+	            xor        si,si
+	            xor        di, di
+	            xor        cx, cx
 	; colocamos la contidad de caracteres a comparar
-	            mov       cx, 8
-	            lea       si, adminUser
-	            lea       di, user
-	            repe      cmpsb
+	            mov        cx, 8
+	            lea        si, adminUser
+	            lea        di, user
+	            repe       cmpsb
 	; si es el usuario pasamos a comparar
-	            je        ADMINCONTRA
+	            je         ADMINCONTRA
 	; si no es el admin mandamos error de usuario que no existe
-	            jmp       NOUSER
+	            jmp        NOUSER
 	
 	; recorremos la lista para obtener la contraseña
 	CONTRA:     
-	            inc       si
-	            mov       bl, listaUsuarios[si]
+	            inc        si
+	            mov        bl, listaUsuarios[si]
 	; verificamos si terminamos de recuperar la contraseña
-	            cmp       bl , '%'
+	            cmp        bl , '%'
 	; nos vamos a comparar contraseña
-	            je        COMPARE
-	            mov       auxCadena[di], bl
-	            inc       di
-	            jmp       CONTRA
+	            je         COMPARE
+	            mov        auxCadena[di], bl
+	            inc        di
+	            jmp        CONTRA
 	          
 	NOUSER:     
 	;si no existe el usuario enviamos mensaje y regresamos al menu
-	            print     msmError9
-	            print     salto
-	            jmp       Menu
+	            print      msmError9
+	            print      salto
+	            jmp        Menu
 
 	ADMINCONTRA:
 	; limpiamos registros para la comparacion
-	            xor       si,si
-	            xor       di, di
-	            xor       cx, cx
-	            mov       cx, 5
-	            lea       si, adminPass
-	            lea       di, pass
-	            repe      cmpsb
+	            xor        si,si
+	            xor        di, di
+	            xor        cx, cx
+	            mov        cx, 5
+	            lea        si, adminPass
+	            lea        di, pass
+	            repe       cmpsb
 	; si es el admin nos dirigimos al menu del administrador
-	            je        AdminMenu
-	            jmp       WRONGPASS
+	            je         ORDER
+	            jmp        WRONGPASS
+
+	ORDER:      
+	            getNumbers listaPunteos
+	            jmp        AdminMenu
 
 	COMPARE:    
 	; limpiamos registros para la comparacion
-	            xor       si,si
-	            xor       di, di
-	            xor       cx, cx
+	            xor        si,si
+	            xor        di, di
+	            xor        cx, cx
 	; la cantidad de caracteres a comparar es 5
-	            mov       cx, 5
-	            lea       si, auxCadena
-	            lea       di, pass
-	            repe      cmpsb
+	            mov        cx, 5
+	            lea        si, auxCadena
+	            lea        di, pass
+	            repe       cmpsb
 	; si la conntraseña del usuario coincide con la del usuario accedemos al juego
-	            je        ACCESS
-	            jmp       WRONGPASS
+	            je         ACCESS
+	            jmp        WRONGPASS
 
 	WRONGPASS:  
 	; usuario valido pero contraseña incorrecta
-	            print     msmError10
-	            print     salto
-	            jmp       IniciarSesion
+	            print      msmError10
+	            print      salto
+	            jmp        IniciarSesion
 
 	ACCESS:     
-	            print     aunNo
+	            print      aunNo
 	            getChar
-	            jmp       Menu
+	            jmp        Menu
 endm
+
+
+; ORDENAMIENTOS
+; obtener los puntos de los registros que tenemos
+getNumbers macro punteos
+	           LOCAL          GETRECORD, NEXT, END, SEPARATE
+	; registro para llevar el indice de la lista de punteos
+	           xor            si, si
+	; registro para llevar el indice de los puntos ingresados
+	           xor            di, di
+	; contador que utilizare para saber cuando registros tengo
+	           xor            cx, cx
+	; limpiamos variable auxiliar
+	           clean          auxCadena, SIZEOF auxCadena
+
+	GETRECORD: 
+	           mov            bl, punteos[si]
+	; verificamos final de cadena
+	           cmp            bl, '$'
+	           je             END
+	; comparamos si terminamos de obtener el registro
+	           cmp            bl, '%'
+	           je             SEPARATE
+	; sino almacenamos el registro en variable auxiliar
+	           mov            auxCadena[di], bl
+	           inc            si
+	           inc            di
+	           jmp            GETRECORD
+
+	SEPARATE:  
+	           pushRecords
+	; separamos los registros de puntos y tiempo
+	           separateRecord auxCadena
+	; conventimos el punteo a numero
+	           to_int         punteo
+	           mov            punteoAux, ax
+	; conventimos el punteo a numero
+	           to_int         tiempo
+	           mov            tiempoAux, ax
+	           popRecords
+	; colocames en ax la la cantidad anterior
+	           mov            ax, cx
+	           mov            bx, 2
+	; multiplicamos ax * 2 para obtener la posicion donde almacenar
+	           imul           bx
+	           xor            di, di
+	; colocamos la posicion obtenida en di
+	           mov            di, ax
+	; posicion di almacenamos el valor
+	           xor            ax, ax
+	           mov            ax, punteoAux
+	           mov            puntajes[di], ax
+	           xor            ax, ax
+	           mov            ax, tiempoAux
+	           mov            tiempos[di], ax
+	; incrementamos el contador de registros encontrados
+	           inc            cx
+	; dirigimos a obtener el siguiente registro
+	           jmp            NEXT
+
+	NEXT:      
+	; salteamos es '%'
+	           inc            si
+	; limpiamos los registros para recorrer la cadena auxiliar
+	           xor            di, di
+	; limiamos auxCadena
+	           clean          auxCadena, SIZEOF auxCadena
+	           jmp            GETRECORD
+
+	END:       
+
+endm 
+
+; recorrer el registro para separar
+separateRecord macro registro
+	               LOCAL USUARIO, NIVEL, PUNTOS, TIEMPOS, NEXT, END
+	; registro que llevara el indice del registro obtenido
+	               xor   si, si
+	; registro que llevara el indice de donde almacenaremos los valores
+	               xor   di, di
+	               clean punteo, SIZEOF punteo
+	               clean tiempo, SIZEOF tiempo
+
+
+	USUARIO:       
+	               mov   bl, registro[si]
+	; comparamos para ver si terminamos de obtener el usuario
+	               cmp   bl, ','
+	               je    NIVEL
+	; incrementamos indicie
+	               inc   si
+	               jmp   USUARIO
+
+	NIVEL:         
+	; incrementamos indicie para saltar ','
+	               inc   si
+	               mov   bl, registro[si]
+	; comparamos para ver si terminamos de obtener el nivel
+	               cmp   bl, ','
+	               je    PUNTOS
+	               jmp   NIVEL
+
+	PUNTOS:        
+	; incrementamos indicie para saltar ','
+	               inc   si
+	               mov   bl, registro[si]
+	; comparamos para ver si terminamos de obtener el punteo
+	               cmp   bl, ','
+	               je    NEXT
+	; si no es coma almacenamos el punteo
+	               mov   punteo[di], bl
+	               inc   di
+	               jmp   PUNTOS
+
+	NEXT:          
+	; reiniciamos di para poder llevar el registro del tiempo
+	               xor   di,di
+	               jmp   TIEMPOS
+
+	TIEMPOS:       
+	; incrementamos indicie para saltar ','
+	               inc   si
+	               mov   bl, registro[si]
+	; comparamos para ver si terminamos de obtener el tiempo
+	               cmp   bl, '$'
+	               je    END
+	; si no es coma almacenamos el tiempo
+	               mov   tiempo[di], bl
+	               inc   di
+	               jmp   TIEMPOS
+
+	END:           
+
+endm
+
+
+
+
+
+
+
+
+
 
