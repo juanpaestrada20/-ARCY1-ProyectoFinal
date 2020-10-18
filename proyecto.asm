@@ -49,6 +49,11 @@ include macros.asm
 	; lista posiciones
 	positionsListTimes  dw 100 dup('$')
 
+	; cantidad de registros almacenados
+	cont                dw 0
+	cont2               dw 0
+	cont3               dw 0
+
 	;================ MENU ADMIN ========================
 	opcionAdmin         db 0ah,0dh, '1) TOP 10 PUNTOS',0ah,0dh,'2) TOP 10 TIEMPOS',0ah,0dh,'3) SALIR',0ah,0dh,'$'
 

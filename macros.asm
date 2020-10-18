@@ -274,7 +274,6 @@ to_string macro string
 
 endm
 
-
 to_int macro string
 	           LOCAL CONVERTSI, FINSI, ACTIVARC2,ULTIMACION,C2
 	           PUSH  si
@@ -680,100 +679,109 @@ endm
 
 ;para hacer el login verificamos si existe el usuario o es el admin
 login macro user, pass
-	            LOCAL      SEARCH, CONTRA, ADMIN, ADMINCONTRA,NOUSER, COMPARE, WRONGPASS, ACCESS, ORDER
-	            xor        si, si
-	            xor        di, di
-	            clean      auxCadena, SIZEOF auxCadena
+	            LOCAL         SEARCH, CONTRA, ADMIN, ADMINCONTRA,NOUSER, COMPARE, WRONGPASS, ACCESS, ORDER
+	            xor           si, si
+	            xor           di, di
+	            clean         auxCadena, SIZEOF auxCadena
 
 	SEARCH:     
 	; verificamos que el usuario exista
-	            userExist  user
+	            userExist     user
 	; limpiamos lo que usaremos para obtener contraseña
-	            xor        di, di
-	            clean      auxCadena, SIZEOF auxCadena
+	            xor           di, di
+	            clean         auxCadena, SIZEOF auxCadena
 	; si existe el usurio bl contendra 'Y' y sino contrndra 'N'
-	            cmp        bl, 'Y'
+	            cmp           bl, 'Y'
 	; pasamos a buscar la contraseña del usuario
-	            je         CONTRA
+	            je            CONTRA
 	; si no se encuentra el usuario vemos si es el usuario del administrador
-	            jmp        ADMIN
+	            jmp           ADMIN
 
 	ADMIN:      
 	; limpiamos los registros para comparar
-	            xor        si,si
-	            xor        di, di
-	            xor        cx, cx
+	            xor           si,si
+	            xor           di, di
+	            xor           cx, cx
 	; colocamos la contidad de caracteres a comparar
-	            mov        cx, 8
-	            lea        si, adminUser
-	            lea        di, user
-	            repe       cmpsb
+	            mov           cx, 8
+	            lea           si, adminUser
+	            lea           di, user
+	            repe          cmpsb
 	; si es el usuario pasamos a comparar
-	            je         ADMINCONTRA
+	            je            ADMINCONTRA
 	; si no es el admin mandamos error de usuario que no existe
-	            jmp        NOUSER
+	            jmp           NOUSER
 	
 	; recorremos la lista para obtener la contraseña
 	CONTRA:     
-	            inc        si
-	            mov        bl, listaUsuarios[si]
+	            inc           si
+	            mov           bl, listaUsuarios[si]
 	; verificamos si terminamos de recuperar la contraseña
-	            cmp        bl , '%'
+	            cmp           bl , '%'
 	; nos vamos a comparar contraseña
-	            je         COMPARE
-	            mov        auxCadena[di], bl
-	            inc        di
-	            jmp        CONTRA
+	            je            COMPARE
+	            mov           auxCadena[di], bl
+	            inc           di
+	            jmp           CONTRA
 	          
 	NOUSER:     
 	;si no existe el usuario enviamos mensaje y regresamos al menu
-	            print      msmError9
-	            print      salto
-	            jmp        Menu
+	            print         msmError9
+	            print         salto
+	            jmp           Menu
 
 	ADMINCONTRA:
 	; limpiamos registros para la comparacion
-	            xor        si,si
-	            xor        di, di
-	            xor        cx, cx
-	            mov        cx, 5
-	            lea        si, adminPass
-	            lea        di, pass
-	            repe       cmpsb
+	            xor           si,si
+	            xor           di, di
+	            xor           cx, cx
+	            mov           cx, 5
+	            lea           si, adminPass
+	            lea           di, pass
+	            repe          cmpsb
 	; si es el admin nos dirigimos al menu del administrador
-	            je         ORDER
-	            jmp        WRONGPASS
+	            je            ORDER
+	            jmp           WRONGPASS
 
 	ORDER:      
-	            getNumbers listaPunteos
-	            jmp        AdminMenu
+	; obtengo los puntajes y tiempos
+	            getNumbers    listaPunteos
+	; transferimos el arreglo de punteos para ordenar
+	            transferArray puntajes, orderedPoints
+	            BubbleSort    orderedPoints
+	            printArray    orderedPoints
+	            getChar
+	; transferimos el arreglo de tiempos para ordenar
+	            transferArray tiempos, orderedTimes
+	            BubbleSort    orderedTimes
+	            printArray    orderedTimes
+	            jmp           AdminMenu
 
 	COMPARE:    
 	; limpiamos registros para la comparacion
-	            xor        si,si
-	            xor        di, di
-	            xor        cx, cx
+	            xor           si,si
+	            xor           di, di
+	            xor           cx, cx
 	; la cantidad de caracteres a comparar es 5
-	            mov        cx, 5
-	            lea        si, auxCadena
-	            lea        di, pass
-	            repe       cmpsb
+	            mov           cx, 5
+	            lea           si, auxCadena
+	            lea           di, pass
+	            repe          cmpsb
 	; si la conntraseña del usuario coincide con la del usuario accedemos al juego
-	            je         ACCESS
-	            jmp        WRONGPASS
+	            je            ACCESS
+	            jmp           WRONGPASS
 
 	WRONGPASS:  
 	; usuario valido pero contraseña incorrecta
-	            print      msmError10
-	            print      salto
-	            jmp        IniciarSesion
+	            print         msmError10
+	            print         salto
+	            jmp           IniciarSesion
 
 	ACCESS:     
-	            print      aunNo
+	            print         aunNo
 	            getChar
-	            jmp        Menu
+	            jmp           Menu
 endm
-
 
 ; ORDENAMIENTOS
 ; obtener los puntos de los registros que tenemos
@@ -843,6 +851,7 @@ getNumbers macro punteos
 	           jmp            GETRECORD
 
 	END:       
+	           mov            cont, cx
 
 endm 
 
@@ -908,11 +917,101 @@ separateRecord macro registro
 
 endm
 
+; transferimos a la lista para odenar 
+transferArray macro origin, destiny
+	              LOCAL RECORRER, INCREMENT, END
+	              xor   si, si
+	              xor   ax, ax
+
+	RECORRER:     
+	              mov   ax, origin[si]
+	; comparo fin de arreglo
+	              cmp   ax, '$'
+	              je    END
+	; si no es el ultimo muevo el valor
+	              mov   destiny[si], ax
+	              jmp   INCREMENT
+
+	INCREMENT:    
+	; aumento 2 posiciones
+	              inc   si
+	              inc   si
+	; limpio ax
+	              xor   ax, ax
+	; continuo reocrriendo
+	              jmp   RECORRER
+
+	END:          
 
 
+endm
 
+; imprimir  arreglo
+printArray macro array
+	           LOCAL     GETNUMBER, INCREMENT, END
+	; lleva la posicion del arreglo
+	           xor       si, si
+	           clean     auxCadena, SIZEOF auxCadena
 
+	GETNUMBER: 
+	           mov       ax, array[si]
+	; comparo si es el fin de cadena
+	           cmp       ax, '$'
+	           je        END
+	; sino imprimo
+	           push      si
+	           to_string auxCadena
+	           print     auxCadena
+	           print     salto
+	           pop       si
+	           jmp       INCREMENT
 
+	INCREMENT: 
+	; incremento si dos veces
+	           inc       si
+	           inc       si
+	; limpio cadena auxiliar
+	           clean     auxCadena, SIZEOF auxCadena
+	           jmp       GETNUMBER
+
+	END:       
+
+endm
+
+; ORDENAMIENTOS SIN GRAFICA
+; BUBBLE SORT
+BubbleSort macro array
+	           LOCAL JUMP3, JUMP2, JUMP1, Ascendent
+	           dec   cont
+	           xor   di, di
+	           mov   cont2, 00h
+	JUMP3:     
+	           mov   si, di
+	           inc   si
+	           inc   si
+	JUMP2:     
+	           mov   ax, array[di]                 	; al
+	           mov   dx, array[si]
+	           cmp   dx, '$'
+	           je    JUMP1                         	; ah
+	
+	Ascendent: 
+	           cmp   ax, dx
+	           jle   JUMP1
+	           mov   array[di], dx
+	           mov   array[si], ax
+	JUMP1:     
+	           inc   si
+	           inc   si
+	           cmp   si, SIZEOF array
+	           jnz   JUMP2
+	           inc   di
+	           inc   di
+	           inc   cont2
+	           mov   cx, cont2
+	           cmp   cx, cont
+	           jnz   JUMP3
+endm
 
 
 
