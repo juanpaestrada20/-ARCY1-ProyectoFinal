@@ -5,104 +5,114 @@ include macros.asm
 .stack 100h 
 .data
 	;================ INICIO DE SESION ========================
-	linea               db '----------------------------------------------------------------------------', '$'
-	encab               db 0ah,0dh, 'UNIVERSIDAD DE SAN CARLOS DE GUATEMALA', 0ah,0dh,'FACULTAD DE INGENIERIA',0ah,0dh,'CIENCIAS Y SISTEMAS',0ah,0dh,'ARQUITECTURA DE COMPUTADORES 1' ,
+	linea               db  '----------------------------------------------------------------------------', '$'
+	encab               db  0ah,0dh, 'UNIVERSIDAD DE SAN CARLOS DE GUATEMALA', 0ah,0dh,'FACULTAD DE INGENIERIA',0ah,0dh,'CIENCIAS Y SISTEMAS',0ah,0dh,'ARQUITECTURA DE COMPUTADORES 1' ,
 0ah,0dh,'SECCION A',0ah,0dh,'Proyecto 2','$'
-	datos               db 0ah,0dh, 09h, 09h, 'JUAN PABLO ESTRADA ALEMAN', 0ah,0dh, 09h, 09h, 09h, '201800709',0ah,0dh,'$'
-	inicioRegisto       db 0ah,0dh, '1) INGRESAR',0ah,0dh,'2) REGISTRARSE',0ah,0dh,'3) SALIR',0ah,0dh,'$'
-	eligaop             db 0ah, 0dh, 'Elija una opcion: ', 0ah, 0dh, '$'
-	salto               db 0ah, 0dh , '$'
-	tab                 db 09h, 09h , '$'
-	tab1                db 09h , '$'
+	datos               db  0ah,0dh, 09h, 09h, 'JUAN PABLO ESTRADA ALEMAN', 0ah,0dh, 09h, 09h, 09h, '201800709',0ah,0dh,'$'
+	inicioRegisto       db  0ah,0dh, '1) INGRESAR',0ah,0dh,'2) REGISTRARSE',0ah,0dh,'3) SALIR',0ah,0dh,'$'
+	eligaop             db  0ah, 0dh, 'Elija una opcion: ', 0ah, 0dh, '$'
+	salto               db  0ah, 0dh , '$'
+	tab                 db  09h, 09h , '$'
+	tab1                db  09h , '$'
 	
 	;================ USUARIOS ========================
-	newUser             db 0ah, 0dh, 'Ingrese el usuario: ', '$'
-	newPass             db 'Ingrese el password: ', '$'
-	usuario             db 15 dup('$')                                                                                                                                                 	;
-	password            db 10 dup('$')                                                                                                                                                 	;
-	adminUser           db 'adminAI','$'
-	adminPass           db '4321', '$'
-	listaUsuarios       db 300 dup('$')
+	newUser             db  0ah, 0dh, 'Ingrese el usuario: ', '$'
+	newPass             db  'Ingrese el password: ', '$'
+	usuario             db  15 dup('$')                                                                                                                                                 	;
+	password            db  10 dup('$')                                                                                                                                                 	;
+	adminUser           db  'adminAI','$'
+	adminPass           db  '4321', '$'
+	listaUsuarios       db  300 dup('$')
 	; usuarios con puntos desordenados
-	listaPunteos        db 1000 dup('$')
-	auxCadena           db 100 dup('$')
-	aux                 db 100 dup('$')
+	listaPunteos        db  1000 dup('$')
+	auxCadena           db  100 dup('$')
+	aux                 db  100 dup('$')
 
 	; variable para almacenar el punteo
-	punteo              db 10 dup('$')
-	punteoAux           dw 0
+	punteo              db  10 dup('$')
+	punteoAux           dw  0
 	; lista de puntajes desordenados
-	puntajes            dw 200 dup('$')
+	puntajes            dw  200 dup('$')
 	; lista de puntajes para ordenar
-	orderedPoints       dw 200 dup('$')
+	orderedPoints       dw  200 dup('$')
 	; lista de usuarios ya ordenado
-	orderedUsersPoints  db 300 dup('$')
+	orderedUsersPoints  db  300 dup('$')
 	; lista posiciones
-	positionsListPoints dw 100 dup('$')
+	positionsListPoints dw  100 dup('$')
 
 	; variable para almacenar el tiempo
-	tiempo              db 10 dup('$')
-	tiempoAux           dw 0
-	; lista de puntajes desordenados
-	tiempos             dw 200 dup('$')
-	; lista de puntajes para ordenar
-	orderedTimes        dw 200 dup('$')
+	tiempo              db  10 dup('$')
+	tiempoAux           dw  0
+	; lista de tiempos desordenados
+	tiempos             dw  200 dup('$')
+	; lista de tiempos para ordenar
+	orderedTimes        dw  200 dup('$')
 	; lista de usuarios ya ordenado
-	orderedUsersTimes   db 300 dup('$')
+	orderedUsersTimes   db  300 dup('$')
 	; lista posiciones
-	positionsListTimes  dw 100 dup('$')
+	positionsListTimes  dw  100 dup('$')
 
 	; cantidad de registros almacenados
-	cont                dw 0
-	cont2               dw 0
-	cont3               dw 0
+	cont                dw  0
+	cont2               dw  0
+	cont3               dw  0
 
 	;================ MENU ADMIN ========================
-	opcionAdmin         db 0ah,0dh, '1) TOP 10 PUNTOS',0ah,0dh,'2) TOP 10 TIEMPOS',0ah,0dh,'3) SALIR',0ah,0dh,'$'
+	opcionAdmin         db  0ah,0dh, '1) TOP 10 PUNTOS',0ah,0dh,'2) TOP 10 TIEMPOS',0ah,0dh,'3) SALIR',0ah,0dh,'$'
 
-	date                db '00/00/0000'
-	hour                db '00:00:00'
+	date                db  '00/00/0000'
+	hour                db  '00:00:00'
 
-	msm1                db 0ah,0dh,'INGRESE RUTA: ',0ah,0dh,'$'
-	msm2                db 0ah,0dh,'Archivo leido exitosamente!',0ah,0dh,'$'
-	msm3                db 0ah,0dh,'Fin de analisis',0ah,0dh,'$'
-	msm4                db 0ah,0dh,'Creando Reporte JSON',0ah,0dh,'$'
-	msm5                db 0ah,0dh,'Reporte generado exitosamente!',0ah,0dh,'$'
-	msm6                db 0ah,0dh,'Regresando al Menu','$'
-	msmError1           db 0ah,0dh,'Error al abrir archivo','$'
-	msmError2           db 0ah,0dh,'Error al leer archivo','$'
-	msmError3           db 0ah,0dh,'Error al crear archivo','$'
-	msmError4           db 0ah,0dh,'Error al escribir archivo','$'
-	msmError5           db 0ah,0dh,'Debe ser a lo mucho 7 caracteres','$'
-	msmError6           db 0ah,0dh,'El usuario ya existe','$'
-	msmError7           db 0ah,0dh,'La contrasena debe contener solo numeros','$'
-	msmError8           db 0ah,0dh,'La contrasena debe ser de 4 numeros','$'
-	msmError9           db 0ah,0dh,'El usuario no existe','$'
-	msmError10          db 0ah,0dh,'Contrasena incorrecta','$'
-	rutaArchivo         db 100 dup('$')
-	rutaUsuarios        db 'users.txt', 00h
-	rutaPunteos         db 'users.log', 00h
-	bufferLectura       db 1000 dup('$')
-	bufferEscritura     db 100 dup('$')
-	handleFichero       dw ?
+	msm1                db  0ah,0dh,'INGRESE RUTA: ',0ah,0dh,'$'
+	msm2                db  0ah,0dh,'Archivo leido exitosamente!',0ah,0dh,'$'
+	msm3                db  0ah,0dh,'Fin de analisis',0ah,0dh,'$'
+	msm4                db  0ah,0dh,'Creando Reporte JSON',0ah,0dh,'$'
+	msm5                db  0ah,0dh,'Reporte generado exitosamente!',0ah,0dh,'$'
+	msm6                db  0ah,0dh,'Regresando al Menu','$'
+	msmError1           db  0ah,0dh,'Error al abrir archivo','$'
+	msmError2           db  0ah,0dh,'Error al leer archivo','$'
+	msmError3           db  0ah,0dh,'Error al crear archivo','$'
+	msmError4           db  0ah,0dh,'Error al escribir archivo','$'
+	msmError5           db  0ah,0dh,'Debe ser a lo mucho 7 caracteres','$'
+	msmError6           db  0ah,0dh,'El usuario ya existe','$'
+	msmError7           db  0ah,0dh,'La contrasena debe contener solo numeros','$'
+	msmError8           db  0ah,0dh,'La contrasena debe ser de 4 numeros','$'
+	msmError9           db  0ah,0dh,'El usuario no existe','$'
+	msmError10          db  0ah,0dh,'Contrasena incorrecta','$'
+	rutaArchivo         db  100 dup('$')
+	rutaUsuarios        db  'users.txt', 00h
+	rutaPunteos         db  'users.log', 00h
+	bufferLectura       db  1000 dup('$')
+	bufferEscritura     db  100 dup('$')
+	handleFichero       dw  ?
 
-	aunNo               db 'Metodo no implementado' , '$'
-	varAux              dw 0
-	tipo                db 0
+	aunNo               db  'Metodo no implementado' , '$'
+	varAux              db  0
+	tipo                db  0
 
 	; ============================ VARIABLES REPORTE ============================
-	punto               db '.', '$'
-	numeral             db '#', '$'
-	usuarioT            db 'USER', '$'
-	nivel               db 'NIVEL', '$'
-	punteoT             db 'PUNTEO', '$'
-	tiempoT             db 'TIEMPO', '$'
-	segundo             db 's','$'
-	user                db 10 dup('$')
-	level               db 5 dup('$')
-	topPuntaje          db 'TOP 10 PUNTOS', '$'
-	topTiempos          db 'TOP 10 TIEMPOS', '$'
+	punto               db  '.', '$'
+	numeral             db  '#', '$'
+	usuarioT            db  'USER', '$'
+	nivel               db  'NIVEL', '$'
+	punteoT             db  'PUNTEO', '$'
+	tiempoT             db  'TIEMPO', '$'
+	segundo             db  's','$'
+	user                db  10 dup('$')
+	level               db  5 dup('$')
+	topPuntaje          db  'TOP 10 PUNTOS', '$'
+	topTiempos          db  'TOP 10 TIEMPOS', '$'
 	
+	; ============================ COLORES ============================
+	blanco              equ 0fh
+	rojo                equ 04h
+	azul                equ 20h
+	amarillo            equ 0eh
+	verde               equ 30h
+	morado              equ 05h
+
+	color               db  0fh
+
 	entra           db 0ah,0dh,'entra','$'
 .code ;segmento de código
 ;================== SECCION DE CODIGO ===========================
@@ -169,14 +179,26 @@ include macros.asm
 			print salto
 			mov tipo, 49
 			reporteTop topPuntaje, orderedUsersPoints, tipo
-			print aunNo
 			getChar
+			ModoVideoOn
+			escribirCadena 12, 1, topPuntaje, '0'
+			pintarCuadro
+			pushRecords
+			pintarBarras orderedPoints
+			popRecords
+			getChar
+			ModoVideoOff
 			jmp AdminMenu
 		TopTiempo:
-		print salto
+			print salto
 			mov tipo, 50
 			reporteTop topTiempos, orderedUsersTimes, tipo
-			print aunNo
+			ModoVideoOn
+			escribirCadena 13, 1, topTiempos, '0'
+			pintarCuadro
+			pintarBarras tiempos
+			getChar
+			ModoVideoOff
 			getChar
 			jmp AdminMenu
 		Salir: 

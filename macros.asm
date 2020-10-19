@@ -1092,7 +1092,6 @@ orderRecords macro origen, destino, posiciones
 	             xor         cx, cx
 	             xor         dx, dx
 	             mov         cont2, 00h
-	             print       entra
 	; limpiamos variable auxiliar
 	             clean       auxCadena, SIZEOF auxCadena
 
@@ -1124,21 +1123,6 @@ orderRecords macro origen, destino, posiciones
 	; obtengo la posicion del arreglo
 	             xor         ax, ax
 	             mov         ax, posiciones[di]
-	             pushRecords
-	             clean       aux, SIZEOF aux
-	             to_string   aux
-	             print       aux
-	             clean       aux, SIZEOF aux
-	             popRecords
-	             pushRecords
-	             print       salto
-	             clean       aux, SIZEOF aux
-	             mov         ax, cx
-	             to_string   aux
-	             print       aux
-	             clean       aux, SIZEOF aux
-	             getChar
-	             popRecords
 	; comparo la posicion en la que voy con la que deberia de ir
 	             cmp         ax, cx
 	             je          AGREGAR
@@ -1167,8 +1151,6 @@ orderRecords macro origen, destino, posiciones
 	; agregamos suparador a la lista
 	             mov         bl, '%'
 	             mov         destino[di], bl
-	             print       destino
-	             print       salto
 	             popRecords
 	; incremento al siguiente en contador para la lista de posiciones
 	             inc         cont2
@@ -1314,4 +1296,285 @@ reporteTOP macro title, lista, tipo
 endm
 
 
+; GRAFICAR
 
+;Activar Modo Video 
+ModoVideoOn macro
+	            mov ax,13h
+	            int 10h
+endm
+;Desactivar Modo Video 
+ModoVideoOff macro
+	             mov ax,3h
+	             int 10h
+endm
+
+; pintar bloque de puntaje
+PintarBloque macro posX,posY,sizeX,sizeY,color		;x0,y0,tamX,tamY,color
+	             LOCAL       EJEX,EJEY,FIN
+	             pushRecords
+	             xor         di,di
+	             xor         si,si
+	             mov         di,posX      	;x
+	             mov         si,posY      	;y
+	EJEX:        
+	             PintarPixel di,si,color
+	             inc         di
+	             xor         dx,dx
+	             mov         dx,posX
+	             add         dx,sizeX
+	             cmp         di,dx
+	             jne         EJEX
+	EJEY:        
+	             inc         si
+	             xor         di,di
+	             mov         di,posX
+	             xor         dx,dx
+	             mov         dx,posY
+	             add         dx,sizeY
+	             cmp         si,dx
+	             jne         EJEX
+	FIN:         
+	             popRecords
+endm
+
+PintarPixel macro posx,posy,color		;x0,y0,color
+	            pushRecords
+	            mov         ah,0ch
+	            mov         al,color
+	            mov         bh,0h
+	            mov         dx,posy
+	            mov         cx,posx
+	            int         10h
+	            popRecords
+endm
+; Activar Modo Video 
+ModoVideoOn macro
+	            mov ax,13h
+	            int 10h
+endm
+; Desactivar Modo Video 
+ModoVideoOff macro
+	             mov ax,3h
+	             int 10h
+endm
+
+PintarLinea macro posX,posY,color,tam,direccion 		;x0,y0,color,largo,direccion(1=horizontal,0=vertical)
+	            LOCAL       DIRECCION1,EJEX,EJEY,FIN
+    
+	            push        di
+	            push        si
+	            push        bx
+	            push        cx
+	            xor         di,di
+	            xor         si,si
+	            mov         di,posX
+	            mov         si,posY
+	            mov         cx,direccion
+
+	DIRECCION1: 
+	            cmp         cx,1
+	            je          EJEX
+	            cmp         cx,0
+	            je          EJEY
+	            jmp         FIN
+
+	EJEX:       
+	            PintarPixel di,si,color
+	            inc         di
+	            xor         bx,bx
+	            mov         bx,posX
+	            add         bx,tam
+	            cmp         di,bx
+	            je          FIN
+	            jmp         EJEX
+
+	EJEY:       
+	            PintarPixel di,si,color
+	            inc         si
+	            xor         bx,bx
+	            mov         bx,posY
+	            add         bx,tam
+	            cmp         si,bx
+	            je          FIN
+	            jmp         EJEY
+
+	FIN:        
+	            pop         di
+	            pop         si
+	            pop         bx
+	            pop         cx
+endm
+
+; pintar cuador
+pintarCuadro macro
+	             PintarLinea 10, 20, blanco, 300, 1
+	             PintarLinea 10, 20, blanco, 170, 0
+	             PintarLinea 10, 190, blanco, 300, 1
+	             PintarLinea 310, 20, blanco, 171, 0
+endm
+
+; mover la posicion del cursor
+moverCursor macro posX, posY
+	            mov ah, 02h
+	            mov bh, 00h
+	            mov dl, posX
+	            mov dh, posY
+	            int 10h
+endm
+
+; escribir caracter
+escribirChar macro caracter, color
+	             mov ah, 09h
+	             mov al, caracter
+	             mov bh, 00h
+	             mov bl, color
+	             mov cx, 01h
+	             int 10h
+endm
+
+; escribir cadena en modo video
+escribirCadena macro posX, posY, texto, tiempo
+	               LOCAL        RECORRER, SALIR, INCREMENTAR, DETENER
+	               pushRecords
+	; indice del arreglo
+	               xor          si, si
+	               xor          ax,ax
+	               xor          dx, dx
+	               mov          dl, posX
+	               mov          dh, posY
+	
+	RECORRER:      
+	               mov          al, texto[si]
+	; comparamos fin de cadena
+	               cmp          al, '$'
+	               je           SALIR
+	               moverCursor  dl, dh
+	               escribirChar al, blanco
+	               jmp          INCREMENTAR
+	
+	INCREMENTAR:   
+	               inc          dl
+	               inc          si
+	               mov          al, tiempo
+	               cmp          al, '1'
+	               je           DETENER
+	               jmp          RECORRER
+
+	DETENER:       
+	               pushRecords
+	               medioDelay
+	               popRecords
+	               jmp          RECORRER
+
+	SALIR:         
+	               popRecords
+endm
+
+; delay medio segundo
+medioDelay macro
+	           mov ah,86h
+	           mov dx,4240h
+	           int 15h
+endm
+
+; delay 1 segundo
+Delay macro
+	      mov ah,86h
+	      mov cx, 0fh
+	      mov dx,4240h
+	      int 15h
+endm
+
+; pintar barras
+pintarBarras macro lista
+	             LOCAL        RECORRER, PINTAR, INCREMENTAR, SALIR
+	; indice del arreglo
+	             xor          si, si
+	; numero obtenido
+	             xor          bx, bx
+	; cantidad de barras
+	             xor          cx, cx
+	; posicion x de la barra
+	             xor          ax, ax
+	             mov          ax, 20
+	             xor          di, di
+
+	RECORRER:    
+	             mov          bx, lista[si]
+	             pushRecords
+	; calcular altura
+	; calcular base
+	; calcular color
+	             selColor     bx
+	             popRecords
+	             jmp          PINTAR
+			
+	PINTAR:      
+	             pushRecords
+	             PintarBloque ax, 50, 19, 50, color
+	             getChar
+	             popRecords
+	; colocar numero
+	             jmp          INCREMENTAR
+
+	INCREMENTAR: 
+	; movemos poscion inicial de la barra
+	             add          ax, 29
+	; incrementamos el indice del arreglo
+	             inc          si
+	             inc          si
+	; comparamos que sea la cantidad de barras
+	             cmp          di, cont
+	             jge          SALIR
+	; incrementamos barra agregada
+	             inc          di
+	             jmp          RECORRER
+	SALIR:       
+
+endm
+
+; calculamos el color dependiendo 
+selColor macro value
+	         LOCAL RED, BLUE, WHITE, YELLOW, GREEN, SALIR, DEFAULT
+
+	         mov   bx, value
+	         cmp   bx, 21
+	         jl    RED
+	         cmp   bx, 41
+	         jl    BLUE
+	         cmp   bx, 61
+	         jl    YELLOW
+	         cmp   bx, 81
+	         jl    GREEN
+	         cmp   bx, 99
+	         jl    WHITE
+	         jmp   DEFAULT
+
+	RED:     
+	         mov   color, rojo
+	         jmp   SALIR
+
+	BLUE:    
+	         mov   color, azul
+	         jmp   SALIR
+
+	YELLOW:  
+	         mov   color, amarillo
+	         jmp   SALIR
+
+	GREEN:   
+	         mov   color, verde
+	         jmp   SALIR
+
+	WHITE:   
+	         mov   color, blanco
+	         jmp   SALIR
+
+	DEFAULT: 
+	         mov   color, morado
+	         jmp   SALIR
+
+	SALIR:   
+
+endm
