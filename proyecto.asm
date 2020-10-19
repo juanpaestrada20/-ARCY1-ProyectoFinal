@@ -26,6 +26,7 @@ include macros.asm
 	; usuarios con puntos desordenados
 	listaPunteos        db 1000 dup('$')
 	auxCadena           db 100 dup('$')
+	aux                 db 100 dup('$')
 
 	; variable para almacenar el punteo
 	punteo              db 10 dup('$')

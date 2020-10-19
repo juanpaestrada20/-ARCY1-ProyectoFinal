@@ -766,6 +766,7 @@ login macro user, pass
 	            BubbleSort    orderedPoints, positionsListPoints
 	            orderRecords  listaPunteos, orderedUsersPoints, positionsListPoints
 	; transferimos el arreglo de tiempos para ordenar
+	            inc           cont
 	            transferArray tiempos, orderedTimes
 	            BubbleSort    orderedTimes, positionsListTimes
 	            orderRecords  listaPunteos, orderedUsersTimes, positionsListTimes
@@ -809,6 +810,7 @@ getNumbers macro punteos
 	           xor            cx, cx
 	; limpiamos variable auxiliar
 	           clean          auxCadena, SIZEOF auxCadena
+	           mov            cont, 00h
 
 	GETRECORD: 
 	           mov            bl, punteos[si]
@@ -1088,13 +1090,17 @@ orderRecords macro origen, destino, posiciones
 	             xor         di, di
 	; iniciar contador
 	             xor         cx, cx
+	             xor         dx, dx
 	             mov         cont2, 00h
+	             print       entra
 	; limpiamos variable auxiliar
 	             clean       auxCadena, SIZEOF auxCadena
 
 	RECORRER:    
 	             mov         bl, origen[si]
 	; comparmos separador de cadena
+	             cmp         bl, '$'
+	             je          END
 	             cmp         bl, '%'
 	; si es separador de cadena comparamos posicion
 	             je          COMPARAR
@@ -1118,6 +1124,21 @@ orderRecords macro origen, destino, posiciones
 	; obtengo la posicion del arreglo
 	             xor         ax, ax
 	             mov         ax, posiciones[di]
+	             pushRecords
+	             clean       aux, SIZEOF aux
+	             to_string   aux
+	             print       aux
+	             clean       aux, SIZEOF aux
+	             popRecords
+	             pushRecords
+	             print       salto
+	             clean       aux, SIZEOF aux
+	             mov         ax, cx
+	             to_string   aux
+	             print       aux
+	             clean       aux, SIZEOF aux
+	             getChar
+	             popRecords
 	; comparo la posicion en la que voy con la que deberia de ir
 	             cmp         ax, cx
 	             je          AGREGAR
@@ -1146,6 +1167,8 @@ orderRecords macro origen, destino, posiciones
 	; agregamos suparador a la lista
 	             mov         bl, '%'
 	             mov         destino[di], bl
+	             print       destino
+	             print       salto
 	             popRecords
 	; incremento al siguiente en contador para la lista de posiciones
 	             inc         cont2
