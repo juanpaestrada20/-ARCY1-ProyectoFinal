@@ -68,7 +68,6 @@ createFile macro buffer, handle
 	           jc  ErrorCrear	; error por si no se crea el archivo
 endm
 
-
 ; Escritura de archivos
 ; numbytes es el tamaño de la cadena que queremos escribir
 ; buffer es la cadena que queremos escribir
@@ -683,6 +682,18 @@ login macro user, pass
 	            xor           si, si
 	            xor           di, di
 	            clean         auxCadena, SIZEOF auxCadena
+	            clean         punteo, SIZEOF punteo
+	            mov           punteoAux, 00h
+	; clean         puntajes SIZEOF puntajes
+	; clean         orderedPoints, SIZEOF orderedPoints
+	            clean         orderedUsersPoints, SIZEOF orderedUsersPoints
+	;clean         positionsListPoints, SIZEOF positionsListPoints
+	            clean         tiempo, SIZEOF tiempo
+	            mov           tiempoAux, 00h
+	;clean         tiempos SIZEOF tiempos
+	; clean         orderedTimes, SIZEOF orderedTimes
+	            clean         orderedUsersTimes, SIZEOF orderedUsersTimes
+	;clean         positionsListTimes, SIZEOF positionsListTimes
 
 	SEARCH:     
 	; verificamos que el usuario exista
@@ -746,15 +757,18 @@ login macro user, pass
 	ORDER:      
 	; obtengo los puntajes y tiempos
 	            getNumbers    listaPunteos
+	; llenamos el arreglo para saber que posiciones puedo mover
+	            fillpositions positionsListPoints
+	            transferArray positionsListPoints, positionsListTimes
 	; transferimos el arreglo de punteos para ordenar
 	            transferArray puntajes, orderedPoints
-	            BubbleSort    orderedPoints
-	            printArray    orderedPoints
-	            getChar
+	; ordenamos los puntos y posiciones nuevas
+	            BubbleSort    orderedPoints, positionsListPoints
+	            orderRecords  listaPunteos, orderedUsersPoints, positionsListPoints
 	; transferimos el arreglo de tiempos para ordenar
 	            transferArray tiempos, orderedTimes
-	            BubbleSort    orderedTimes
-	            printArray    orderedTimes
+	            BubbleSort    orderedTimes, positionsListTimes
+	            orderRecords  listaPunteos, orderedUsersTimes, positionsListTimes
 	            jmp           AdminMenu
 
 	COMPARE:    
@@ -980,8 +994,8 @@ endm
 
 ; ORDENAMIENTOS SIN GRAFICA
 ; BUBBLE SORT
-BubbleSort macro array
-	           LOCAL JUMP3, JUMP2, JUMP1, Ascendent
+BubbleSort macro array, array2
+	           LOCAL JUMP3, JUMP2, JUMP1, SWAP
 	           dec   cont
 	           xor   di, di
 	           mov   cont2, 00h
@@ -990,16 +1004,23 @@ BubbleSort macro array
 	           inc   si
 	           inc   si
 	JUMP2:     
-	           mov   ax, array[di]                 	; al
+	           mov   ax, array[di]            	; al
 	           mov   dx, array[si]
 	           cmp   dx, '$'
-	           je    JUMP1                         	; ah
+	           je    JUMP1                    	; ah
 	
-	Ascendent: 
+	SWAP:      
 	           cmp   ax, dx
-	           jle   JUMP1
+	           jge   JUMP1
 	           mov   array[di], dx
 	           mov   array[si], ax
+	           xor   ax, ax
+	           xor   bx, bx
+	           mov   ax, array2[di]
+	           mov   bx, array2[si]
+	           mov   array2[di], bx
+	           mov   array2[si], ax
+
 	JUMP1:     
 	           inc   si
 	           inc   si
@@ -1013,6 +1034,116 @@ BubbleSort macro array
 	           jnz   JUMP3
 endm
 
+; llenamos el arreglo auxiliar para 
+fillpositions macro array
+	              LOCAL RECORRER, END
+	; limipiar registro que llevara la posicion del arreglo
+	              xor   si, si
+	; limpiamos el registro que llevara el numero
+	              xor   ax, ax
+	; inicializamos el contador en 0
+	              mov   cont2, 00h
 
+	RECORRER:     
+	; colocamos el numero en el arreglo
+	              mov   array[si], ax
+	; incrementamos el indice
+	              inc   si
+	              inc   si
+	; incrementamos el numero
+	              inc   ax
+	; incrementamos cantidad ingresada
+	              inc   cont2
+	; comparamos que sea la misma cantidad de datos
+	              mov   cx, cont
+	              cmp   cont2, cx
+	              je    END
+	              jmp   RECORRER
 
+	END:          
 
+endm
+
+; ordenear los registros completos
+orderRecords macro origen, destino, posiciones
+	             LOCAL       RECORRER, COMPARAR, AUMENTAR, END, RESTART, AGREGAR
+	; posicion de array de origen
+	             xor         si, si
+	; posicion de array destino
+	             xor         di, di
+	; iniciar contador
+	             xor         cx, cx
+	             mov         cont2, 00h
+	; limpiamos variable auxiliar
+	             clean       auxCadena, SIZEOF auxCadena
+
+	RECORRER:    
+	             mov         bl, origen[si]
+	; comparmos separador de cadena
+	             cmp         bl, '%'
+	; si es separador de cadena comparamos posicion
+	             je          COMPARAR
+	             mov         auxCadena[di], bl
+	             inc         si
+	             inc         di
+	             jmp         RECORRER
+
+	COMPARAR:    
+	; limpiamos el registro para acceder al arreglo de posiciones
+	             xor         di, di
+	             xor         bx, bx
+	; limpiasmo donde almacenaremos la posicion
+	             xor         ax, ax
+	             mov         ax, cont2
+	             mov         bx, 2
+	; multiplico ax * 2
+	             imul        bx
+	; coloco la posicion del arreglo de posiciones
+	             mov         di, ax
+	; obtengo la posicion del arreglo
+	             xor         ax, ax
+	             mov         ax, posiciones[di]
+	; comparo la posicion en la que voy con la que deberia de ir
+	             cmp         ax, cx
+	             je          AGREGAR
+	; si no es lo posicion continuo a la siguiente
+	             jmp         AUMENTAR
+
+	AUMENTAR:    
+	; limpio el registro di y la cadena auxiliar
+	             xor         di, di
+	             clean       auxCadena, SIZEOF auxCadena
+	; incremento el contador
+	             inc         cx
+	; compara que cx no se mas grande que el tamaño del arreglo de posiciones
+	             cmp         cx, cont
+	; si es mas grande significa que ya estan todos colocados
+	             jg          RESTART
+	; sino incremento si para saltar el %
+	             inc         si
+	; continuo a obtener la cadena
+	             jmp         RECORRER
+
+	AGREGAR:     
+	             pushRecords
+	; guardamos el registro
+	             saveOnArray auxCadena, destino
+	; agregamos suparador a la lista
+	             mov         bl, '%'
+	             mov         destino[di], bl
+	             popRecords
+	; incremento al siguiente en contador para la lista de posiciones
+	             inc         cont2
+	             mov         dx, cont2
+	             cmp         dx, cont
+	             jg          END
+	             jmp         AUMENTAR
+
+	RESTART:     
+	             xor         cx, cx
+	             xor         si, si
+	             jmp         RECORRER
+
+	END:         
+
+endm
