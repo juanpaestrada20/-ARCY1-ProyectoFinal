@@ -871,11 +871,13 @@ endm
 
 ; recorrer el registro para separar
 separateRecord macro registro
-	               LOCAL USUARIO, NIVEL, PUNTOS, TIEMPOS, NEXT, END
+	               LOCAL USUARIO, NIVEL, PUNTOS, TIEMPOS, NEXT, END, SIGUIENTE, SIGUIENTE2
 	; registro que llevara el indice del registro obtenido
 	               xor   si, si
 	; registro que llevara el indice de donde almacenaremos los valores
 	               xor   di, di
+	               clean user, SIZEOF user
+	               clean level, SIZEOF level
 	               clean punteo, SIZEOF punteo
 	               clean tiempo, SIZEOF tiempo
 
@@ -884,10 +886,16 @@ separateRecord macro registro
 	               mov   bl, registro[si]
 	; comparamos para ver si terminamos de obtener el usuario
 	               cmp   bl, ','
-	               je    NIVEL
-	; incrementamos indicie
+	               je    SIGUIENTE
+	               mov   user[di], bl
+	               inc   di
+	; incrementamos indice
 	               inc   si
 	               jmp   USUARIO
+
+	SIGUIENTE:     
+	               xor   di, di
+	               jmp   NIVEL
 
 	NIVEL:         
 	; incrementamos indicie para saltar ','
@@ -895,8 +903,15 @@ separateRecord macro registro
 	               mov   bl, registro[si]
 	; comparamos para ver si terminamos de obtener el nivel
 	               cmp   bl, ','
-	               je    PUNTOS
+	               je    SIGUIENTE2
+	               mov   level[di], bl
+	               inc   di
 	               jmp   NIVEL
+
+	SIGUIENTE2:    
+	               clean punteo, SIZEOF punteo
+	               xor   di, di
+	               jmp   PUNTOS
 
 	PUNTOS:        
 	; incrementamos indicie para saltar ','
@@ -1147,3 +1162,133 @@ orderRecords macro origen, destino, posiciones
 	END:         
 
 endm
+
+;reporte de top10 en consola
+reporteTOP macro title, lista, tipo
+	           LOCAL          RECORRER, SEPARAR, IMPRIMIR, END, COMPARAR, PUNTAJE, TIME, SIGUIENTE, ENCABEZADO, TITULO1, TITULO2
+	; indice del arreglo de la lista ordenada
+	           xor            si, si
+	; indice que llevara la cadena auxiliar
+	           xor            di, di
+	; limpiar el contador paara solo imprimir 10
+	           xor            cx, cx
+	; limpiar cadena auxiliar
+	           clean          auxCadena, SIZEOF auxCadena
+	           print          linea
+	           print          salto
+	           print          tab
+	           print          tab
+	           print          title
+	           print          salto
+	           print          linea
+	           print          salto
+	           print          numeral
+	           print          tab1
+	           print          usuarioT
+	           print          tab
+	           print          tab
+	           print          nivel
+	           print          tab1
+	           print          tab
+
+	ENCABEZADO:
+	           mov            bl, 49
+	           cmp            bl, tipo
+	           je             TITULO1
+	           jmp            TITULO2
+
+	TITULO1:   
+	           print          punteoT
+	           print          salto
+	           print          linea
+	           print          salto
+	           jmp            RECORRER
+
+	TITULO2:   
+	           print          tiempoT
+	           print          salto
+	           print          linea
+	           print          salto
+	           jmp            RECORRER
+
+	RECORRER:  
+	           mov            bl, lista[si]
+	; comparamos fin de arreglo
+	           cmp            bl, '$'
+	           je             END
+	; comparamos separador de registro
+	           cmp            bl, '%'
+	           je             SEPARAR
+	; sino pues guardamos en cadena auxiliar
+	           mov            auxCadena[di], bl
+	           inc            si
+	           inc            di
+	           jmp            RECORRER
+
+	SEPARAR:   
+	           pushRecords
+	; separamos el registro
+	           separateRecord auxCadena
+	           popRecords
+	; incrementamos el numero
+	           inc            cx
+	           pushRecords
+	           mov            ax, cx
+	           clean          auxCadena, SIZEOF auxCadena
+	; convertimos el numero a string
+	           to_string      auxCadena
+	           popRecords
+	           jmp            IMPRIMIR
+
+	IMPRIMIR:  
+	; imprimimos el numero
+	           print          auxCadena
+	; imprimivos el punto
+	           print          punto
+	           print          tab1
+	; imprimimos el usuario
+	           print          user
+	; imprimimos espacio en blanco
+	           print          tab
+	; imprimimos nivel
+	           print          tab
+	           print          level
+	; imprimimos espacio en blanco
+	           print          tab1
+	           print          tab
+	; vemos si imprimimos punteo o tiempo
+	           jmp            COMPARAR
+
+	COMPARAR:  
+	; si el tipo es 1 significa es punteo
+	           mov            bl, 49
+	           cmp            bl, tipo
+	           je             PUNTAJE
+	           jmp            TIME
+
+	PUNTAJE:   
+	           print          punteo
+	           jmp            SIGUIENTE
+
+	TIME:      
+	           print          tiempo
+	           print          segundo
+	           jmp            SIGUIENTE
+
+	SIGUIENTE: 
+	; comparamos si ya imprimimos 10
+	           print          salto
+	           cmp            cx, 10
+	           je             END
+	; saltamos el '%'
+	           inc            si
+	           xor            di, di
+	           clean          auxCadena, SIZEOF auxCadena
+	           jmp            RECORRER
+
+	END:       
+
+endm
+
+
+

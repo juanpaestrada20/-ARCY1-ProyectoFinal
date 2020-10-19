@@ -12,6 +12,8 @@ include macros.asm
 	inicioRegisto       db 0ah,0dh, '1) INGRESAR',0ah,0dh,'2) REGISTRARSE',0ah,0dh,'3) SALIR',0ah,0dh,'$'
 	eligaop             db 0ah, 0dh, 'Elija una opcion: ', 0ah, 0dh, '$'
 	salto               db 0ah, 0dh , '$'
+	tab                 db 09h, 09h , '$'
+	tab1                db 09h , '$'
 	
 	;================ USUARIOS ========================
 	newUser             db 0ah, 0dh, 'Ingrese el usuario: ', '$'
@@ -85,9 +87,20 @@ include macros.asm
 
 	aunNo               db 'Metodo no implementado' , '$'
 	varAux              dw 0
+	tipo                db 0
 
 	; ============================ VARIABLES REPORTE ============================
-	
+	punto               db '.', '$'
+	numeral             db '#', '$'
+	usuarioT            db 'USER', '$'
+	nivel               db 'NIVEL', '$'
+	punteoT             db 'PUNTEO', '$'
+	tiempoT             db 'TIEMPO', '$'
+	segundo             db 's','$'
+	user                db 10 dup('$')
+	level               db 5 dup('$')
+	topPuntaje          db 'TOP 10 PUNTOS', '$'
+	topTiempos          db 'TOP 10 TIEMPOS', '$'
 	
 	entra           db 0ah,0dh,'entra','$'
 .code ;segmento de código
@@ -152,10 +165,16 @@ include macros.asm
 			je Menu
 			jmp AdminMenu
 		TopPuntos:
+			print salto
+			mov tipo, 49
+			reporteTop topPuntaje, orderedUsersPoints, tipo
 			print aunNo
 			getChar
 			jmp AdminMenu
 		TopTiempo:
+		print salto
+			mov tipo, 50
+			reporteTop topTiempos, orderedUsersTimes, tipo
 			print aunNo
 			getChar
 			jmp AdminMenu
