@@ -1074,7 +1074,7 @@ fillpositions macro array
 	; comparamos que sea la misma cantidad de datos
 	              mov   cx, cont
 	              cmp   cont2, cx
-	              je    END
+	              jge   END
 	              jmp   RECORRER
 
 	END:          
@@ -1513,7 +1513,6 @@ pintarBarras macro lista
 	PINTAR:      
 	             pushRecords
 	             PintarBloque ax, 170, base, altura, color
-	             getChar
 	             popRecords
 	             pushRecords
 	             setPoints    punteoAux, ax
@@ -1634,7 +1633,4 @@ setPoints macro numero, posX
 	          idiv           bx
 	          moverCursor    0, 0
 	          escribirCadena al, 48, auxCadena
-	          getChar
-	          
-   
 endm
