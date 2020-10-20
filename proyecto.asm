@@ -57,6 +57,14 @@ include macros.asm
 	cont2               dw  0
 	cont3               dw  0
 
+	altura              dw  0
+	max                 dw  0
+	base                dw  0
+	separacion          dw  10
+	
+
+	var1                db  0
+	var2                db  0
 	;================ MENU ADMIN ========================
 	opcionAdmin         db  0ah,0dh, '1) TOP 10 PUNTOS',0ah,0dh,'2) TOP 10 TIEMPOS',0ah,0dh,'3) SALIR',0ah,0dh,'$'
 
@@ -179,12 +187,17 @@ include macros.asm
 			print salto
 			mov tipo, 49
 			reporteTop topPuntaje, orderedUsersPoints, tipo
+			xor ax, ax
+			mov ax, orderedPoints[0]
+			; colocamos el valor mas alto 
+			mov max, ax
 			getChar
 			ModoVideoOn
-			escribirCadena 12, 1, topPuntaje, '0'
+			escribirCadena 13, 1, topPuntaje
 			pintarCuadro
 			pushRecords
 			pintarBarras orderedPoints
+			;setPoints orderedPoints
 			popRecords
 			getChar
 			ModoVideoOff
@@ -193,10 +206,17 @@ include macros.asm
 			print salto
 			mov tipo, 50
 			reporteTop topTiempos, orderedUsersTimes, tipo
+			xor ax, ax
+			mov ax, orderedTimes[0]
+			; colocamos el valor mas alto 
+			mov max, ax
+			getChar
 			ModoVideoOn
-			escribirCadena 13, 1, topTiempos, '0'
+			escribirCadena 13, 1, topTiempos
 			pintarCuadro
-			pintarBarras tiempos
+			pushRecords
+			pintarBarras orderedTimes
+			popRecords
 			getChar
 			ModoVideoOff
 			getChar

@@ -1326,12 +1326,12 @@ PintarBloque macro posX,posY,sizeX,sizeY,color		;x0,y0,tamX,tamY,color
 	             cmp         di,dx
 	             jne         EJEX
 	EJEY:        
-	             inc         si
+	             dec         si
 	             xor         di,di
 	             mov         di,posX
 	             xor         dx,dx
 	             mov         dx,posY
-	             add         dx,sizeY
+	             sub         dx,sizeY
 	             cmp         si,dx
 	             jne         EJEX
 	FIN:         
@@ -1434,37 +1434,29 @@ escribirChar macro caracter, color
 endm
 
 ; escribir cadena en modo video
-escribirCadena macro posX, posY, texto, tiempo
-	               LOCAL        RECORRER, SALIR, INCREMENTAR, DETENER
+escribirCadena macro posX, posY, texto
+	               LOCAL        RECORRER, SALIR, INCREMENTAR
 	               pushRecords
 	; indice del arreglo
 	               xor          si, si
-	               xor          ax,ax
-	               xor          dx, dx
+	               xor          bx, bx
+	;xor          dx, dx
 	               mov          dl, posX
 	               mov          dh, posY
 	
 	RECORRER:      
-	               mov          al, texto[si]
+	               mov          bl, texto[si]
 	; comparamos fin de cadena
-	               cmp          al, '$'
+	               cmp          bl, '$'
 	               je           SALIR
 	               moverCursor  dl, dh
-	               escribirChar al, blanco
+	               escribirChar bl, blanco
 	               jmp          INCREMENTAR
 	
 	INCREMENTAR:   
 	               inc          dl
 	               inc          si
-	               mov          al, tiempo
-	               cmp          al, '1'
-	               je           DETENER
-	               jmp          RECORRER
-
-	DETENER:       
-	               pushRecords
-	               medioDelay
-	               popRecords
+				   
 	               jmp          RECORRER
 
 	SALIR:         
@@ -1499,28 +1491,39 @@ pintarBarras macro lista
 	             xor          ax, ax
 	             mov          ax, 20
 	             xor          di, di
+	;anchura
+	             xor          dx, dx
+	             push         ax
+	             anchura
+	             pop          ax
 
 	RECORRER:    
 	             mov          bx, lista[si]
-	             pushRecords
+	             mov          punteoAux, bx
 	; calcular altura
-	; calcular base
+	             pushRecords
+	             height       punteoAux
+	             popRecords
 	; calcular color
-	             selColor     bx
+	             pushRecords
+	             selColor     punteoAux
 	             popRecords
 	             jmp          PINTAR
 			
 	PINTAR:      
 	             pushRecords
-	             PintarBloque ax, 50, 19, 50, color
+	             PintarBloque ax, 170, base, altura, color
 	             getChar
 	             popRecords
-	; colocar numero
+	             pushRecords
+	             setPoints    punteoAux, ax
+	             popRecords
 	             jmp          INCREMENTAR
 
 	INCREMENTAR: 
 	; movemos poscion inicial de la barra
-	             add          ax, 29
+	             add          ax, base
+	             add          ax, separacion
 	; incrementamos el indice del arreglo
 	             inc          si
 	             inc          si
@@ -1577,4 +1580,61 @@ selColor macro value
 
 	SALIR:   
 
+endm
+
+; calculamos la altura
+height macro puntaje
+	       LOCAL SALIR, SALIR2
+	       xor   ax, ax
+	       xor   bx, bx
+
+	       mov   ax, 140
+	       mov   bx, puntaje
+
+	       cmp   bx, 0
+	       je    SALIR
+
+	       mul   bx
+	       xor   bx, bx
+	       mov   bx, max
+	       idiv  bx
+	       mov   altura, ax
+	       jmp   SALIR2
+		   
+	SALIR: 
+	       mov   altura, 1
+
+	SALIR2:
+		   
+endm
+
+; calcular base
+anchura macro
+	        mov  bx, cont
+	        inc  bx
+	        mov  ax, 280
+	        idiv bx
+	        mov  base, ax
+	        sub  base, 10
+endm
+
+; colocar punteo debajo de la barra
+setPoints macro numero, posX
+	          pushRecords
+	          clean          auxCadena, SIZEOF auxCadena
+	          mov            ax, numero
+	          to_string      auxCadena
+	          popRecords
+	          mov            bx, 10
+	          xor            dx, dx
+	; muevo pos x a ax
+	          mov            ax, posX
+			  
+	; divido entre 5
+	          idiv           bx
+	          moverCursor    0, 0
+	          escribirCadena al, 48, auxCadena
+	          getChar
+	          
+   
 endm
