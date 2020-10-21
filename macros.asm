@@ -1295,9 +1295,7 @@ reporteTOP macro title, lista, tipo
 
 endm
 
-
 ; GRAFICAR
-
 ;Activar Modo Video 
 ModoVideoOn macro
 	            mov ax,13h
@@ -1463,19 +1461,36 @@ escribirCadena macro posX, posY, texto
 	               popRecords
 endm
 
-; delay medio segundo
-medioDelay macro
-	           mov ah,86h
-	           mov dx,4240h
-	           int 15h
+; limpiar pantalla
+clearScreen macro
+	            mov ah, 06h
+	            mov al, 00h
+	            mov bh, negro
+	            mov dl, 79
+	            mov dh, 24
+	            mov cx, 00h
+	            int 10h
 endm
 
-; delay 1 segundo
-Delay macro
-	      mov ah,86h
-	      mov cx, 0fh
-	      mov dx,4240h
-	      int 15h
+; DELAY
+Delay macro number
+	      local D1, D2, EndGC
+    
+	      push  si
+	      push  di
+
+	      mov   si, number
+	D1:   
+	      dec   si
+	      jz    EndGC
+	      mov   di, number
+	D2:   
+	      dec   di
+	      jnz   D2
+	      JMP   d1
+	EndGC:
+	      pop   di
+	      pop   si
 endm
 
 ; pintar barras
@@ -1590,9 +1605,11 @@ height macro puntaje
 	       mov   ax, 140
 	       mov   bx, puntaje
 
+	; por si la altura es 0 no hago nada
 	       cmp   bx, 0
 	       je    SALIR
 
+	; 140 px * puntaje / puntaje maximo
 	       mul   bx
 	       xor   bx, bx
 	       mov   bx, max
@@ -1634,3 +1651,250 @@ setPoints macro numero, posX
 	          moverCursor    0, 0
 	          escribirCadena al, 48, auxCadena
 endm
+
+; ordenamiento con grafica
+BubbleSortG macro array, velocidad, forma
+	            LOCAL       JUMP3, JUMP2, JUMP1, ASCENDENTE, DESCENDENTE ,PINTAR
+	            xor         di, di
+	            mov         cont2, 00h
+	JUMP3:      
+	            mov         si, di
+	            inc         si
+	            inc         si
+	JUMP2:      
+	            mov         ax, array[di]                                       	; al
+	            mov         dx, array[si]
+	            cmp         dx, '$'
+	            je          JUMP1
+	; comparo si es ascendente o descendente
+	            cmp         forma, 50
+	            je          DESCENDENTE
+	
+	ASCENDENTE: 
+	            cmp         ax, dx
+	            jge         JUMP1
+	            mov         array[di], dx
+	            mov         array[si], ax
+	            jmp         PINTAR
+
+	DESCENDENTE:
+	            cmp         ax, dx
+	            jle         JUMP1
+	            mov         array[di], dx
+	            mov         array[si], ax
+	            jmp         PINTAR
+	PINTAR:     
+	            pushRecords
+	            graphChange array, velocidad
+	            popRecords
+
+	JUMP1:      
+	            inc         si
+	            inc         si
+	            cmp         si, SIZEOF array
+	            jnz         JUMP2
+	            inc         di
+	            inc         di
+	            inc         cont2
+	            mov         cx, cont2
+	            cmp         cx, cont
+	            jnz         JUMP3
+endm
+
+;graficar el intercambio
+graphChange macro lista, velocidad
+	            LOCAL           DECIMAS, UNIDAD, SEGUIR
+	;limpio pantalla
+	            clearScreen
+	; escribimos parte de arriba
+	            pushRecords
+	            escribirCadena  0, 1, burbuja
+	            mov             al, speed
+	            mov             speedLabel[11], al
+	            escribirCadena  12, 1, speedLabel
+	            popRecords
+	            calcularTiempo
+	            mov             ah, 0
+	            mov             al, minFinal
+	            clean           auxCadena, SIZEOF auxCadena
+	            pushRecords
+	            to_string       auxCadena
+	            popRecords
+	            mov             bl, auxCadena[0]
+	            mov             timeLabel[9], bl
+	            mov             ah, 0
+	            mov             al, segFinal
+	            clean           auxCadena, SIZEOF auxCadena
+	            pushRecords
+	            to_string       auxCadena
+	            popRecords
+	            mov             bl, auxCadena[1]
+	            cmp             bl, '$'
+	            jne             DECIMAS
+
+	DECIMAS:    
+	            mov             timeLabel[12], bl
+	            mov             bl, auxCadena[0]
+	            mov             timeLabel[11], bl
+	            jmp             SEGUIR
+
+	UNIDAD:     
+	            mov             bl, auxCadena[0]
+	            mov             timeLabel[11], bl
+	            jmp             SEGUIR
+
+	SEGUIR:     
+	            escribirCadena  26, 1, timeLabel
+	; pintar cuadro
+	            pintarCuadro
+	; pintar barra con cam
+	            pintarBarras    lista
+	            speedCalculator velocidad
+	            Delay           time
+endm
+
+MenuOrdenamiento macro lista
+	                 LOCAL          ORDENAMIENTO, VELOCIDAD, TIPO, COMPARAR, ORDER1, ORDER2, ORDER3, ORDENAMIENTO, END
+	                 xor            ax, ax
+	ORDENAMIENTO:    
+	; imprimimos el menu de tipo de ordenamiento
+	                 print          linea
+	                 print          orderType
+	                 print          linea
+	                 print          opcionOr
+	                 getChar
+	; comparamos que el caracter ingresado sea valido
+	                 cmp            al, 49
+	                 jl             ORDENAMIENTO
+	                 cmp            al, 51
+	                 jg             ORDENAMIENTO
+	; guardamos seleccion
+	                 mov            orderSel, al
+	                 jmp            VELOCIDAD
+	VELOCIDAD:       
+	; imprimimos seleccion de velocidad
+	                 print          linea
+	                 print          speedSel
+	                 getChar
+	; comparamos que la velocidad ingresada sea valida
+	                 cmp            al, 48
+	                 jl             VELOCIDAD
+	                 cmp            al, 57
+	                 jg             VELOCIDAD
+	; si es correcta la guardamos
+	                 mov            speed, al
+	                 jmp            TIPO
+
+	TIPO:            
+	; imprimimos si deseamos ascendente o descendente
+	                 print          linea
+	                 print          orderType
+	                 print          linea
+	                 print          tipoOrden
+	                 getChar
+	; comparamos que el caracter ingresado sea valido
+	                 cmp            al, 49
+	                 jl             TIPO
+	                 cmp            al, 50
+	                 jg             TIPO
+	; guardamos seleccion
+	                 mov            forma, al
+	                 jmp            COMPARAR
+
+	comparar:        
+	; ordenamiento burbuja
+	                 cmp            orderSel, 49
+	                 je             ORDER1
+	; ordenamiento quicksort
+	                 cmp            orderSel, 49
+	                 je             ORDER2
+	; ordenamiento shellsort
+	                 cmp            orderSel, 49
+	                 je             ORDER3
+
+	ORDER1:          
+	                 obtenerInicial
+	                 ModoVideoOn
+	                 BubbleSortG    lista, speed, forma
+	                 getChar
+	                 ModoVideoOff
+	                 jmp            END
+	ORDER2:          
+	ORDER3:          
+	                 print          aunNo
+	                 jmp            END
+
+	END:             
+
+endm
+
+speedCalculator macro velocidad
+	                LOCAL DEFAULT, SALIR
+	                mov   time, 00h
+	; comparar si es 0 asi dejo la velocidad como esta
+	                cmp   velocidad, 48
+	                je    DEFAULT
+	; si no es  hago el calculo
+	                xor   ax, ax
+	                xor   bx, bx
+	                xor   dx, dx
+	                mov   bl, velocidad
+	                mov   ax, 53000
+	                idiv  bx
+	                mov   time, ax
+	                jmp   SALIR
+
+	DEFAULT:        
+	                mov   time, 1200
+	                jmp   SALIR
+
+	SALIR:          
+
+endm
+
+calcularTiempo macro
+	               LOCAL       MINUTO, SEGUNDO,SALIR
+	               pushRecords
+	               mov         ah, 2ch
+	               int         21h
+	               mov         minFinal, cl
+	               mov         segFinal, dh
+	               mov         dl, segInicial
+	               cmp         dl, cl
+	               jge         MINUTO
+	               jmp         SEGUNDO
+
+	MINUTO:        
+	               xor         ax, ax
+	               xor         bx, bx
+	               mov         al,cl
+	               sub         minFinal, al
+	               add         minFinal, 1
+	               mov         bl, segInicial
+	               sub         bl, segFinal
+	               mov         segFinal, bl
+	               jmp         SALIR
+
+	SEGUNDO:       
+	               xor         ax, ax
+	               xor         bx, bx
+	               mov         al,cl
+	               sub         minFinal, al
+	               mov         bl, segInicial
+	               sub         segFinal, bl
+	               jmp         SALIR
+	              
+	SALIR:         
+	               popRecords
+endm
+
+obtenerInicial macro
+	               pushRecords
+	               mov         ah, 2ch
+	               int         21h
+	               mov         minInicial, cl
+	               mov         segInicial, dh
+	               popRecords
+endm
+
+

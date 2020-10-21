@@ -67,6 +67,16 @@ include macros.asm
 	var2                db  0
 	;================ MENU ADMIN ========================
 	opcionAdmin         db  0ah,0dh, '1) TOP 10 PUNTOS',0ah,0dh,'2) TOP 10 TIEMPOS',0ah,0dh,'3) SALIR',0ah,0dh,'$'
+	opcionOr            db  0ah,0dh, '1) BUBBLESORT',0ah,0dh,'2) QUICKSORT',0ah,0dh,'3) SHELLSORT',0ah,0dh,'$'
+	tipoOrden           db  0ah,0dh, '1) ASCENDENTE',0ah,0dh,'2) DESCENDENTE',0ah,0dh, '$'
+	orderType           db  0ah,0dh, 'SELECCIONE EL ORDENAMIENTO',0ah,0dh,'$'
+	speedSel            db  0ah,0dh, 'INGRESE VELOCIDAD (0-9): ',0ah,0dh,'$'
+	; tipo de orddenamiento
+	orderSel            db  0
+	;
+	speed               db  0
+	time                dw  0
+	forma               db  0
 
 	date                db  '00/00/0000'
 	hour                db  '00:00:00'
@@ -110,7 +120,13 @@ include macros.asm
 	level               db  5 dup('$')
 	topPuntaje          db  'TOP 10 PUNTOS', '$'
 	topTiempos          db  'TOP 10 TIEMPOS', '$'
-	
+	burbuja             db  'BUBBLESORT', '$'
+	speedLabel          db  'VELOCIDAD: ', '$', '$'
+	timeLabel           db  'TIEMPO: 00:0' ,'$', '$'
+	minInicial          db  0
+	minFinal            db  0
+	segInicial          db  0
+	segFinal            db  0
 	; ============================ COLORES ============================
 	blanco              equ 0fh
 	rojo                equ 04h
@@ -118,6 +134,7 @@ include macros.asm
 	amarillo            equ 0eh
 	verde               equ 30h
 	morado              equ 05h
+	negro               equ 00h
 
 	color               db  0fh
 
@@ -196,11 +213,15 @@ include macros.asm
 			escribirCadena 13, 1, topPuntaje
 			pintarCuadro
 			pushRecords
-			pintarBarras orderedPoints
-			;setPoints orderedPoints
-			popRecords
+			pintarBarras puntajes
 			getChar
+			popRecords
+			pushRecords
+			transferArray puntajes, orderedPoints
+			popRecords
+			clearScreen
 			ModoVideoOff
+			MenuOrdenamiento orderedPoints
 			jmp AdminMenu
 		TopTiempo:
 			print salto
@@ -215,7 +236,7 @@ include macros.asm
 			escribirCadena 13, 1, topTiempos
 			pintarCuadro
 			pushRecords
-			pintarBarras orderedTimes
+			pintarBarras tiempos
 			popRecords
 			getChar
 			ModoVideoOff
