@@ -1,122 +1,87 @@
-; imprimir cadena;
-; se recibe el texto que se imprimira
 print macro cadena
 	         LOCAL ETIQUETA
 	ETIQUETA:
-	         MOV   ah,09h    	; instruccion de impresion por la interrupcion 21h
+	         MOV   ah,09h
 	         MOV   dx,@data
 	         MOV   ds,dx
-	         lea   dx, cadena	; imprimimos la cadena
-	         int   21h       	; fin de lal operacion
+	         lea   dx, cadena
+	         int   21h
 endm
- 
-; obtener char
-; se utiliza para una pausa y que el usuario pueda leer el texto
 getChar macro
 	        mov ah,01h
 	        int 21h
 endm
-
-; Obtiene la cadena de texto 
-; buffer es donde se almacenara la cadena
 getText macro buffer
 	         LOCAL   CONTINUE, SALIR
-	         PUSH    SI             	; guardar lo que tengo en si
-	         PUSH    AX             	; guardar lo que tengo en ax
+	         PUSH    SI
+	         PUSH    AX
 
-	         xor     si,si          	; limpiar el registro si
+	         xor     si,si
 	CONTINUE:
-	         getChar                	; obtiene un caracter
-	         cmp     al,0dh         	; verifica que sea un enter para dejar de aceptar
-	         je      SALIR          	; si es enter deja de recibir la entrada
-	         mov     buffer[si],al  	; almacena el caracter recibido
-	         inc     si             	; incremento la posicion del array
-	         jmp     CONTINUE       	; continuo recibiendo carcteres
+	         getChar
+	         cmp     al,0dh
+	         je      SALIR
+	         mov     buffer[si],al
+	         inc     si
+	         jmp     CONTINUE
 
 	SALIR:   
-	         mov     al,'$'         	; Coloco final de cadena
-	         mov     buffer[si],al  	; almaceno final de cadena
+	         mov     al,'$'
+	         mov     buffer[si],al
 
-	         POP     AX             	; recuparar valor ax
-	         POP     SI             	; recuperar valor si
+	         POP     AX
+	         POP     SI
 endm
-
-; macro para obtener la ruta
 getRuta macro buffer
 	        LOCAL   INICIO,FIN
-	        xor     si,si         	; limpiamos el registro si
+	        xor     si,si
 	INICIO: 
-	        getChar               	; obtenemos letra
-	        cmp     al,0dh        	; si enter terminamos
+	        getChar
+	        cmp     al,0dh
 	        je      FIN
-	        mov     buffer[si],al 	; concatenamos letra ingresada
+	        mov     buffer[si],al
 	        inc     si
 	        jmp     INICIO
 	FIN:    
-	        mov     buffer[si],00h	; finalizamos de obtener la rua
+	        mov     buffer[si],00h
 endm
-
-; Crea el archivo
-; buffer es el nombre del archivo
-; handle es el manejador del archivo
 createFile macro buffer, handle
-	           mov ah,3ch    	; genera el archivo
-	           mov cx,00h    	; limpia cx
-	           lea dx,buffer 	; le pone nombre al archivo creado
-	           int 21h       	; Finaliza el proceso
-	           mov handle,ax 	;
-	           jc  ErrorCrear	; error por si no se crea el archivo
+	           mov ah,3ch
+	           mov cx,00h
+	           lea dx,buffer
+	           int 21h
+	           mov handle,ax
+	           jc  ErrorCrear
 endm
-
-; Escritura de archivos
-; numbytes es el tamaño de la cadena que queremos escribir
-; buffer es la cadena que queremos escribir
-; handle es el manejador de archivos
 writeFile macro numbytes, buffer, handle
-	          mov ah, 40h      	; Opercion escritura de archivo
-	          mov bx,handle    	; a bx le colocamos el manejador
-	          mov cx, numbytes 	; colocamos de contador el tamaño de lo que se escribira
-	          lea dx,buffer    	; lo guardamos en dx
-	          int 21h          	; fin de opoeracion de escritura
-	          jc  ErrorEscribir	; Error por si no se puede escribir en el archivo
+	          mov ah, 40h
+	          mov bx,handle
+	          mov cx, numbytes
+	          lea dx,buffer
+	          int 21h
+	          jc  ErrorEscribir
 endm
-
-; Abre archivos
-; ruta es la ruta del archivo que queramos abrir
-; handle es para el manejador de archivos del programa
 openFile macro ruta, handle
-	         mov ah,3dh    	; operacion para abrir archivos
-	         mov al,10b    	; operacion de escritura
-	         lea dx,ruta   	; obtiene lo que tiene el archivo
-	         int 21h       	; fin de operacion
-	         mov handle,ax 	; limpia el handle
-	         jc  ErrorAbrir	; error por si no puede abrir el archivo
+	         mov ah,3dh
+	         mov al,10b
+	         lea dx,ruta
+	         int 21h
+	         mov handle,ax
+	         jc  ErrorAbrir
 endm
-
-; Cerrar archivo
-; handle es el manejador del archivo
 closeFile macro handle
-	          mov ah,3eh   	; Operacion de cierre de un archivo abierto
-	          mov handle,bx	; limpiar el manejador
-	          int 21h      	; Fin de operacion
+	          mov ah,3eh
+	          mov handle,bx
+	          int 21h
 endm
-
-; Leer Archivo
-; numbytes -> tamaño del archivo
-; buffer -> donde se almacenara lo del archivo
-; handle -> manejador de archivos
 readFile macro numbytes,buffer,handle
-	         mov ah,3fh     	; Lectura de archivo
-	         mov bx,handle  	; utilizar manejador
-	         mov cx,numbytes	; tamaño del archivo
-	         lea dx,buffer  	; lo leido lo envia a dx
-	         int 21h        	; fin de operacion
-	         jc  ErrorLeer  	; mensaje de error
+	         mov ah,3fh
+	         mov bx,handle
+	         mov cx,numbytes
+	         lea dx,buffer
+	         int 21h
+	         jc  ErrorLeer
 endm
-
-; Limpiar variables
-; value -> variable a limpiar
-; numBytes -> tamaño variable 
 clean macro value, numBytes
 	           local       RepeatLoop
 	           pushRecords
@@ -129,11 +94,6 @@ clean macro value, numBytes
 	           Loop        RepeatLoop
 	           popRecords
 endm
-
-; guardar los registros que tenemos
-; este macro se utilizara al momento de hacer 
-; algun analisis y no perdamos los datos ya 
-; almacenados
 pushRecords macro
 	            push ax
 	            push bx
@@ -142,8 +102,6 @@ pushRecords macro
 	            push si
 	            push di
 endm
-
-; sacar los registros que habiamos guarado
 popRecords macro
 	           pop di
 	           pop si
@@ -152,34 +110,6 @@ popRecords macro
 	           pop bx
 	           pop ax
 endm
-
-; Obtener fecha
-; buffer es donde se almacenara 
-getFecha macro buffer
-	         xor ax, ax         	; limpiar el registro ax
-	         xor bx, bx         	; limpiar el registro bx
-	         mov ah, 2ah        	; operacion para obtener fecha
-	         int 21h            	; fin de operacion
-
-	         mov di,0           	; limpiar el registro di
-	         mov al,dl          	; trnas
-	         bcd buffer
-
-	         inc di
-	         mov al, dh
-	         bcd buffer
-
-	         inc di
-	         mov buffer[di], 32h
-	         inc di
-	         mov buffer[di], 30h
-	         inc di
-	         mov buffer[di], 32h
-	         inc di
-	         mov buffer[di], 30h
-
-endm
-
 getHora macro buffer
 	        xor ax, ax
 	        xor bx, bx
@@ -199,7 +129,6 @@ getHora macro buffer
 	        bcd buffer
 	
 endm
-
 bcd macro entrada
 	    push dx
 	    xor  dx,dx
@@ -220,18 +149,15 @@ bcd macro entrada
 	    pop  dx
 
 endm
-
 to_string macro string
 	            LOCAL NEGATIVO, DIVIDIR,TERMINARDIV,CONV,FINDIV
 	            PUSH  si
 	            PUSH  di
-	;xor ax,ax
 	            xor   dx, dx
 	            xor   bx, bx
 	            xor   cx,cx
 	            xor   si,si
 	            xor   di,di
-	;mov ax,numero
 	            test  ax,1000000000000000
 	            jnz   NEGATIVO
 	            jmp   DIVIDIR
@@ -272,7 +198,6 @@ to_string macro string
 	            nop
 
 endm
-
 to_int macro string
 	           LOCAL CONVERTSI, FINSI, ACTIVARC2,ULTIMACION,C2
 	           PUSH  si
@@ -316,23 +241,21 @@ to_int macro string
 	           POP   si
 	           nop
 endm
-
-;guardar en un arreglo
 saveOnArray macro auxCadena, array
 	            LOCAL ASIGNACION, FIN, POSICION
 	            xor   si, si
 	            xor   di, di
 				
 	POSICION:   
-	            mov   bl, array[di]            	; caracter al registro bl
-	            cmp   bl, '$'                  	; fin de cadena
+	            mov   bl, array[di]
+	            cmp   bl, '$'
 	            je    ASIGNACION
 	            inc   di
 	            jmp   POSICION
 
 	ASIGNACION: 
-	            mov   bl, auxCadena[si]        	; caracter al registro bl
-	            cmp   bl, '$'                  	; fin de cadena
+	            mov   bl, auxCadena[si]
+	            cmp   bl, '$'
 	            je    FIN
 	            mov   array[di], bl
 	            inc   di
@@ -341,27 +264,17 @@ saveOnArray macro auxCadena, array
 
 	FIN:        
 endm
-
-; CARGA DE DATOS INICIALES AL PROGRAMA
-;leemos los archivos que cargaran los datos a nuestra aplicacion
 lecturaArchivos macro
-	; limpiamos nuestro buffer de lectura
 	                clean      bufferLectura, SIZEOF bufferLectura
-	; iniciamos leyendo los usuarios
 	                openFile   rutaUsuarios, handleFichero
 	                readFile   SIZEOF bufferLectura, bufferLectura, handleFichero
 	                closeFile  handleFichero
-	; ya con los usuarios iniciamos a la separacion
 	                readUsers  bufferLectura
-	; limpiamos nuestro buffer de lectura
 	                clean      bufferLectura, SIZEOF bufferLectura
-	; iniciamos leyendo los puntajes
 	                openFile   rutaPunteos, handleFichero
 	                readFile   SIZEOF bufferLectura, bufferLectura, handleFichero
 	                closeFile  handleFichero
-	; ya con los puntajes leidos procedemos a almacenarlos
 	                readPoints bufferLectura
-	; finalizamos con la carga inicial
 					
 endm
 
@@ -372,137 +285,91 @@ readUsers macro buffer
 	          xor         di, di
 	          clean       auxCadena, SIZEOF auxCadena
 
-	;recorremos caracter por caracter la entrada
 	GETUSER:  
 	          mov         bl, buffer[si]
-	; comparamos si hemos llegado al fin de cadena
 	          cmp         bl, '$'
-	; si es el final terminamos de analizar
 	          je          END
-	; si no es final de cadena, vemos si ya finalizamos de obtener el usuario
 	          cmp         bl, ';'
-	; si cumple continuamos a guardar el dato
 	          je          CONTINUE
-	; si no es ninguno de los anteriores vamos guardando la cadena
 	          mov         auxCadena[di], bl
-	; continuamos a incrementar nuestros contadores
 	          jmp         INCREMENT
 
 	INCREMENT:
-	; incrementamos los indices que estamos utilizando
 	          inc         si
 	          inc         di
-	; regresamos para obtener el usuario
 	          jmp         GETUSER
 
 	CONTINUE: 
-	; guardamos nuestros registros en la pila
 	          pushRecords
-	; guardamos el usuario y contrasena
 	          saveOnArray auxCadena, listaUsuarios
-	; agregamos suparador a la lista
 	          mov         bl, '%'
 	          mov         listaUsuarios[di], bl
-	; recuperamos nuestros registros
 	          popRecords
-	; incrementamos si para saltar el caracter ';' , el salto de linea y retorno de carro
 	          inc         si
 	          inc         si
 	          inc         si
-	; limpiamos nuestra variable auxiliar y el indice que utilizamos con este
 	          clean       auxCadena, SIZEOF auxCadena
 	          xor         di, di
-	;continuamos con el analisis de la carga
 	          jmp         GETUSER
 
 	END:      
-	; esta es nuestra etiqueta de salida por lo cual no hacemos nada
 
 endm
 
 ;lectura de puntajes
 readPoints macro buffer
 	           LOCAL       GETRECORD, CONTINUE, INCREMENT, END
-	;limpiamos registros que utilizaremos de indices
 	           xor         si, si
 	           xor         di, di
 	           clean       auxCadena, SIZEOF auxCadena
-	; limpiamos variable auxiliar
 	GETRECORD: 
 	           mov         bl, buffer[si]
-	; comparamos si hemos llegado al fin de cadena
 	           cmp         bl, '$'
-	; si es el final terminamos de analizar
 	           je          END
-	; si no es final de cadena, vemos si ya finalizamos de obtener el resultado
 	           cmp         bl, ';'
-	; si cumple continuamos a almacenar el dato obtenido
 	           je          CONTINUE
-	; si no es ninguno de los anteriores vamos guardando la cadena
 	           mov         auxCadena[di], bl
-	; continuamos a incrementar nuestros contadores
 	           jmp         INCREMENT
 
 	INCREMENT: 
-	; incrementamos los indices que estamos utilizando
 	           inc         si
 	           inc         di
-	; regresamos para obtener el usuario
 	           jmp         GETRECORD
 
 	CONTINUE:  
-	; guardamos nuestros registros en la pila
 	           pushRecords
-	; guardamos el usuario y contrasena
 	           saveOnArray auxCadena, listaPunteos
-	; agregamos suparador a la lista
 	           mov         bl, '%'
 	           mov         listaPunteos[di], '%'
-	; recuperamos nuestros registros
 	           popRecords
-	; incrementamos si para saltar el caracter ';' , el salto de linea y retorno de carro
 	           inc         si
 	           inc         si
 	           inc         si
-	; limpiamos nuestra variable auxiliar y el indice que utilizamos con este
 	           clean       auxCadena, SIZEOF auxCadena
 	           xor         di, di
-	;continuamos con el analisis de la carga
 	           jmp         GETRECORD
 
 	END:       
-	; esta es nuestra etiqueta de salida por lo cual no hacemos nada
 endm
-
-; VERIFICACION DE USUARIO Y CONTASEÑA
-;verificacion de usuario 
 verifyUser macro user
 	           LOCAL     RECORRER, VALIDAR, ERRORSIZE, EXISTENCIA , SALIR, ERROR, ADMIN
-	; Limpiamos los registros que utilizaremos
 	           xor       si, si
 	           xor       di, di
 	           xor       cx, cx
-	; contaremos la cantidad de caracteres que se han ingresado
 	RECORRER:  
 	           mov       bl, user[si]
 	           cmp       bl, '$'
-	; si llegamos al fin de cadena verificamos cuantos caracteres fueron contados
 	           je        VALIDAR
 	           inc       si
 	           jmp       RECORRER
 
 	VALIDAR:   
-	; si el registro si >= 7 significa que ingreso 8 o mas caracteres
 	           cmp       si, 7
-	; error de tamaño
 	           jg        ERRORSIZE
-	; si cumple con el tamaño verificamos que no exista el usuario
 	           jmp       EXISTENCIA
 	
 	EXISTENCIA:
-	; enviamos a comparar el usuario con los ya existentes
 	           userExist user
-	; como primera instancia vemos si el usuario no es igual que el admin
 	           xor       si, si
 	           cmp       bl, 'Y'
 	           je        ERROR
@@ -533,105 +400,74 @@ endm
 ; Verifico que no exita el nombre de usuario que dio el usuario
 userExist macro user
 	           LOCAL GETLIST, INCREMENT, COMPARE, EQUALS, NEXT, END, ACCEPTED, INCREMENT2
-	; limpio los registros que utilizare
 	           xor   si, si
 	           xor   di, di
 	           xor   bx, bx
 
 	GETLIST:   
 	           mov   bl, listaUsuarios[si]
-	; comparo si es el separador entre usuarios
 	           cmp   bl, ':'
-	; si lo es me dirijo a comparar el usuario
 	           je    COMPARE
-	; sino compara si es el fin de cadena
 	           cmp   bl, '$'
-	; si llega aca significa que no existe el usuario
 	           je    ACCEPTED
-	; si no es ninguno continuo a almacenar a una variable axiliar para luego separar
 	           mov   auxCadena[di], bl
-	; vamos a incementar los registros
 	           jmp   INCREMENT
 
 	INCREMENT: 
-	; incrementamos los indices que estamos utilizando
 	           inc   si
 	           inc   di
 	           jmp   GETLIST
 
 	COMPARE:   
-	; guardamos el indice que usamos en la lsita de usuarios
 	           push  si
-	; cantidad de caracteres a comparar
 	           xor   cx, cx
 	           mov   cx, di
 	           mov   ax, ds
 	           mov   es, ax
-	; limpiamos los registros para realizar la comparacion
 	           xor   si, si
 	           xor   di, di
-	; enviamos las cadenas a comparar
 	           lea   si, user
 	           lea   di, auxCadena
-	; realizamos la comparacion
 	           repe  cmpsb
-	; si es igual  nos vamos a EQUALS
 	           je    EQUALS
-	; terminasmos de comparar las cadenas y recuperamos el valor de si
 	           pop   si
-	; si no es igual salteamos la contasena
 	           jmp   NEXT
 
 	EQUALS:    
-	; terminasmos de comparar las cadenas y recuperamos el valor de si
 	           pop   si
-	; seteamos en bl para indicar que si existe ese usuario
 	           mov   bl, 'Y'
-	; salimos de la macro
 	           jmp   END
 
 	NEXT:      
-	; limpio lo que necesitara para almacenar un nuevo usario
 	           xor   di, di
 	           clean auxCadena, SIZEOF auxCadena
 	           mov   bl, listaUsuarios[si]
-	; si encuento '%' ya puedo buscar otro usuaria
 	           cmp   bl, '%'
 	           je    INCREMENT2
 	           inc   si
-	; contiunuamos a obtener el siguiente usuario a comparar
 	           jmp   NEXT
 
 	INCREMENT2:
-	; nos salteamos '%'
 	           inc   si
 	           jmp   GETLIST
 
 	ACCEPTED:  
-	; setamos N a bl para indicar que no existe el usuario ingresado
 	           mov   bl, 'N'
 	           jmp   END
 
 	END:       
 
 endm
-
-;verificamos que la contraseña sean solo numeros
 verifyPass macro pass
 	           LOCAL RECORRER, INCORRECT, END, COMPARE, ERROR
 	           xor   si, si
 	           xor   di, di
-
-	; recorremos caracter por caracter  para verificar que solo sean numeros
 	RECORRER:  
 	           mov   bl, pass[si]
-	; verificamos que sea el fin de cadena
 	           cmp   bl, '$'
 	           je    COMPARE
-	; comparamos que no sea menor que el ascii de '0'
 	           cmp   bl, '0'
 	           jl    INCORRECT
-	; comparamos que no sea mayor que el ascii de '9'
 	           cmp   bl, '9'
 	           jg    INCORRECT
 	           inc   si
@@ -655,28 +491,18 @@ verifyPass macro pass
 	END:       
 
 endm
-
-; agregamos el nuevo usuario con su contraseña
 addNewUser macro user, pass
-	; guardamos nuestros registros en la pila
 	           pushRecords
-	; guardamos el usuario
 	           saveOnArray user, listaUsuarios
-	; agregamos suparador de usuario
 	           mov         bl, ':'
 	           mov         listaUsuarios[di], bl
-	; guardamos el usuario
 	           saveOnArray pass, listaUsuarios
-	; agregamos suparador de usuario y contra
 	           mov         bl, '%'
 	           mov         listaUsuarios[di], bl
-	; recuperamos nuestros registros
 	           popRecords
 
 	           print       listaUsuarios
 endm
-
-;para hacer el login verificamos si existe el usuario o es el admin
 login macro user, pass
 	            LOCAL         SEARCH, CONTRA, ADMIN, ADMINCONTRA,NOUSER, COMPARE, WRONGPASS, ACCESS, ORDER
 	            xor           si, si
@@ -684,65 +510,42 @@ login macro user, pass
 	            clean         auxCadena, SIZEOF auxCadena
 	            clean         punteo, SIZEOF punteo
 	            mov           punteoAux, 00h
-	; clean         puntajes SIZEOF puntajes
-	; clean         orderedPoints, SIZEOF orderedPoints
 	            clean         orderedUsersPoints, SIZEOF orderedUsersPoints
-	;clean         positionsListPoints, SIZEOF positionsListPoints
-	            clean         tiempo, SIZEOF tiempo
 	            mov           tiempoAux, 00h
-	;clean         tiempos SIZEOF tiempos
-	; clean         orderedTimes, SIZEOF orderedTimes
 	            clean         orderedUsersTimes, SIZEOF orderedUsersTimes
-	;clean         positionsListTimes, SIZEOF positionsListTimes
-
 	SEARCH:     
-	; verificamos que el usuario exista
 	            userExist     user
-	; limpiamos lo que usaremos para obtener contraseña
 	            xor           di, di
 	            clean         auxCadena, SIZEOF auxCadena
-	; si existe el usurio bl contendra 'Y' y sino contrndra 'N'
 	            cmp           bl, 'Y'
-	; pasamos a buscar la contraseña del usuario
 	            je            CONTRA
-	; si no se encuentra el usuario vemos si es el usuario del administrador
 	            jmp           ADMIN
 
 	ADMIN:      
-	; limpiamos los registros para comparar
 	            xor           si,si
 	            xor           di, di
 	            xor           cx, cx
-	; colocamos la contidad de caracteres a comparar
 	            mov           cx, 8
 	            lea           si, adminUser
 	            lea           di, user
 	            repe          cmpsb
-	; si es el usuario pasamos a comparar
 	            je            ADMINCONTRA
-	; si no es el admin mandamos error de usuario que no existe
 	            jmp           NOUSER
-	
-	; recorremos la lista para obtener la contraseña
 	CONTRA:     
 	            inc           si
 	            mov           bl, listaUsuarios[si]
-	; verificamos si terminamos de recuperar la contraseña
 	            cmp           bl , '%'
-	; nos vamos a comparar contraseña
 	            je            COMPARE
 	            mov           auxCadena[di], bl
 	            inc           di
 	            jmp           CONTRA
 	          
 	NOUSER:     
-	;si no existe el usuario enviamos mensaje y regresamos al menu
 	            print         msmError9
 	            print         salto
 	            jmp           Menu
 
 	ADMINCONTRA:
-	; limpiamos registros para la comparacion
 	            xor           si,si
 	            xor           di, di
 	            xor           cx, cx
@@ -750,22 +553,16 @@ login macro user, pass
 	            lea           si, adminPass
 	            lea           di, pass
 	            repe          cmpsb
-	; si es el admin nos dirigimos al menu del administrador
 	            je            ORDER
 	            jmp           WRONGPASS
 
 	ORDER:      
-	; obtengo los puntajes y tiempos
 	            getNumbers    listaPunteos
-	; llenamos el arreglo para saber que posiciones puedo mover
 	            fillpositions positionsListPoints
 	            transferArray positionsListPoints, positionsListTimes
-	; transferimos el arreglo de punteos para ordenar
 	            transferArray puntajes, orderedPoints
-	; ordenamos los puntos y posiciones nuevas
 	            BubbleSort    orderedPoints, positionsListPoints
 	            orderRecords  listaPunteos, orderedUsersPoints, positionsListPoints
-	; transferimos el arreglo de tiempos para ordenar
 	            inc           cont
 	            transferArray tiempos, orderedTimes
 	            BubbleSort    orderedTimes, positionsListTimes
@@ -773,21 +570,17 @@ login macro user, pass
 	            jmp           AdminMenu
 
 	COMPARE:    
-	; limpiamos registros para la comparacion
 	            xor           si,si
 	            xor           di, di
 	            xor           cx, cx
-	; la cantidad de caracteres a comparar es 5
 	            mov           cx, 5
 	            lea           si, auxCadena
 	            lea           di, pass
 	            repe          cmpsb
-	; si la conntraseña del usuario coincide con la del usuario accedemos al juego
 	            je            ACCESS
 	            jmp           WRONGPASS
 
 	WRONGPASS:  
-	; usuario valido pero contraseña incorrecta
 	            print         msmError10
 	            print         salto
 	            jmp           IniciarSesion
@@ -797,30 +590,20 @@ login macro user, pass
 	            getChar
 	            jmp           Menu
 endm
-
-; ORDENAMIENTOS
-; obtener los puntos de los registros que tenemos
 getNumbers macro punteos
 	           LOCAL          GETRECORD, NEXT, END, SEPARATE
-	; registro para llevar el indice de la lista de punteos
 	           xor            si, si
-	; registro para llevar el indice de los puntos ingresados
 	           xor            di, di
-	; contador que utilizare para saber cuando registros tengo
 	           xor            cx, cx
-	; limpiamos variable auxiliar
 	           clean          auxCadena, SIZEOF auxCadena
 	           mov            cont, 00h
 
 	GETRECORD: 
 	           mov            bl, punteos[si]
-	; verificamos final de cadena
 	           cmp            bl, '$'
 	           je             END
-	; comparamos si terminamos de obtener el registro
 	           cmp            bl, '%'
 	           je             SEPARATE
-	; sino almacenamos el registro en variable auxiliar
 	           mov            auxCadena[di], bl
 	           inc            si
 	           inc            di
@@ -828,41 +611,29 @@ getNumbers macro punteos
 
 	SEPARATE:  
 	           pushRecords
-	; separamos los registros de puntos y tiempo
 	           separateRecord auxCadena
-	; conventimos el punteo a numero
 	           to_int         punteo
 	           mov            punteoAux, ax
-	; conventimos el punteo a numero
 	           to_int         tiempo
 	           mov            tiempoAux, ax
 	           popRecords
-	; colocames en ax la la cantidad anterior
 	           mov            ax, cx
 	           mov            bx, 2
-	; multiplicamos ax * 2 para obtener la posicion donde almacenar
 	           imul           bx
 	           xor            di, di
-	; colocamos la posicion obtenida en di
 	           mov            di, ax
-	; posicion di almacenamos el valor
 	           xor            ax, ax
 	           mov            ax, punteoAux
 	           mov            puntajes[di], ax
 	           xor            ax, ax
 	           mov            ax, tiempoAux
 	           mov            tiempos[di], ax
-	; incrementamos el contador de registros encontrados
 	           inc            cx
-	; dirigimos a obtener el siguiente registro
 	           jmp            NEXT
 
 	NEXT:      
-	; salteamos es '%'
 	           inc            si
-	; limpiamos los registros para recorrer la cadena auxiliar
 	           xor            di, di
-	; limiamos auxCadena
 	           clean          auxCadena, SIZEOF auxCadena
 	           jmp            GETRECORD
 
@@ -870,13 +641,9 @@ getNumbers macro punteos
 	           mov            cont, cx
 
 endm 
-
-; recorrer el registro para separar
 separateRecord macro registro
 	               LOCAL USUARIO, NIVEL, PUNTOS, TIEMPOS, NEXT, END, SIGUIENTE, SIGUIENTE2
-	; registro que llevara el indice del registro obtenido
 	               xor   si, si
-	; registro que llevara el indice de donde almacenaremos los valores
 	               xor   di, di
 	               clean user, SIZEOF user
 	               clean level, SIZEOF level
@@ -886,12 +653,10 @@ separateRecord macro registro
 
 	USUARIO:       
 	               mov   bl, registro[si]
-	; comparamos para ver si terminamos de obtener el usuario
 	               cmp   bl, ','
 	               je    SIGUIENTE
 	               mov   user[di], bl
 	               inc   di
-	; incrementamos indice
 	               inc   si
 	               jmp   USUARIO
 
@@ -900,10 +665,8 @@ separateRecord macro registro
 	               jmp   NIVEL
 
 	NIVEL:         
-	; incrementamos indicie para saltar ','
 	               inc   si
 	               mov   bl, registro[si]
-	; comparamos para ver si terminamos de obtener el nivel
 	               cmp   bl, ','
 	               je    SIGUIENTE2
 	               mov   level[di], bl
@@ -916,30 +679,23 @@ separateRecord macro registro
 	               jmp   PUNTOS
 
 	PUNTOS:        
-	; incrementamos indicie para saltar ','
 	               inc   si
 	               mov   bl, registro[si]
-	; comparamos para ver si terminamos de obtener el punteo
 	               cmp   bl, ','
 	               je    NEXT
-	; si no es coma almacenamos el punteo
 	               mov   punteo[di], bl
 	               inc   di
 	               jmp   PUNTOS
 
 	NEXT:          
-	; reiniciamos di para poder llevar el registro del tiempo
 	               xor   di,di
 	               jmp   TIEMPOS
 
 	TIEMPOS:       
-	; incrementamos indicie para saltar ','
 	               inc   si
 	               mov   bl, registro[si]
-	; comparamos para ver si terminamos de obtener el tiempo
 	               cmp   bl, '$'
 	               je    END
-	; si no es coma almacenamos el tiempo
 	               mov   tiempo[di], bl
 	               inc   di
 	               jmp   TIEMPOS
@@ -947,8 +703,6 @@ separateRecord macro registro
 	END:           
 
 endm
-
-; transferimos a la lista para odenar 
 transferArray macro origin, destiny
 	              LOCAL RECORRER, INCREMENT, END
 	              xor   si, si
@@ -956,40 +710,30 @@ transferArray macro origin, destiny
 
 	RECORRER:     
 	              mov   ax, origin[si]
-	; comparo fin de arreglo
 	              cmp   ax, '$'
 	              je    END
-	; si no es el ultimo muevo el valor
 	              mov   destiny[si], ax
 	              jmp   INCREMENT
 
 	INCREMENT:    
-	; aumento 2 posiciones
 	              inc   si
 	              inc   si
-	; limpio ax
 	              xor   ax, ax
-	; continuo reocrriendo
 	              jmp   RECORRER
 
 	END:          
 
 
 endm
-
-; imprimir  arreglo
 printArray macro array
 	           LOCAL     GETNUMBER, INCREMENT, END
-	; lleva la posicion del arreglo
 	           xor       si, si
 	           clean     auxCadena, SIZEOF auxCadena
 
 	GETNUMBER: 
 	           mov       ax, array[si]
-	; comparo si es el fin de cadena
 	           cmp       ax, '$'
 	           je        END
-	; sino imprimo
 	           push      si
 	           to_string auxCadena
 	           print     auxCadena
@@ -998,19 +742,14 @@ printArray macro array
 	           jmp       INCREMENT
 
 	INCREMENT: 
-	; incremento si dos veces
 	           inc       si
 	           inc       si
-	; limpio cadena auxiliar
 	           clean     auxCadena, SIZEOF auxCadena
 	           jmp       GETNUMBER
 
 	END:       
 
 endm
-
-; ORDENAMIENTOS SIN GRAFICA
-; BUBBLE SORT
 BubbleSort macro array, array2
 	           LOCAL JUMP3, JUMP2, JUMP1, SWAP
 	           dec   cont
@@ -1021,10 +760,10 @@ BubbleSort macro array, array2
 	           inc   si
 	           inc   si
 	JUMP2:     
-	           mov   ax, array[di]            	; al
+	           mov   ax, array[di]
 	           mov   dx, array[si]
 	           cmp   dx, '$'
-	           je    JUMP1                    	; ah
+	           je    JUMP1
 	
 	SWAP:      
 	           cmp   ax, dx
@@ -1050,28 +789,18 @@ BubbleSort macro array, array2
 	           cmp   cx, cont
 	           jnz   JUMP3
 endm
-
-; llenamos el arreglo auxiliar para 
 fillpositions macro array
 	              LOCAL RECORRER, END
-	; limipiar registro que llevara la posicion del arreglo
 	              xor   si, si
-	; limpiamos el registro que llevara el numero
 	              xor   ax, ax
-	; inicializamos el contador en 0
 	              mov   cont2, 00h
 
 	RECORRER:     
-	; colocamos el numero en el arreglo
 	              mov   array[si], ax
-	; incrementamos el indice
 	              inc   si
 	              inc   si
-	; incrementamos el numero
 	              inc   ax
-	; incrementamos cantidad ingresada
 	              inc   cont2
-	; comparamos que sea la misma cantidad de datos
 	              mov   cx, cont
 	              cmp   cont2, cx
 	              jge   END
@@ -1080,28 +809,20 @@ fillpositions macro array
 	END:          
 
 endm
-
-; ordenear los registros completos
 orderRecords macro origen, destino, posiciones
 	             LOCAL       RECORRER, COMPARAR, AUMENTAR, END, RESTART, AGREGAR
-	; posicion de array de origen
 	             xor         si, si
-	; posicion de array destino
 	             xor         di, di
-	; iniciar contador
 	             xor         cx, cx
 	             xor         dx, dx
 	             mov         cont2, 00h
-	; limpiamos variable auxiliar
 	             clean       auxCadena, SIZEOF auxCadena
 
 	RECORRER:    
 	             mov         bl, origen[si]
-	; comparmos separador de cadena
 	             cmp         bl, '$'
 	             je          END
 	             cmp         bl, '%'
-	; si es separador de cadena comparamos posicion
 	             je          COMPARAR
 	             mov         auxCadena[di], bl
 	             inc         si
@@ -1109,50 +830,34 @@ orderRecords macro origen, destino, posiciones
 	             jmp         RECORRER
 
 	COMPARAR:    
-	; limpiamos el registro para acceder al arreglo de posiciones
 	             xor         di, di
 	             xor         bx, bx
-	; limpiasmo donde almacenaremos la posicion
 	             xor         ax, ax
 	             mov         ax, cont2
 	             mov         bx, 2
-	; multiplico ax * 2
 	             imul        bx
-	; coloco la posicion del arreglo de posiciones
 	             mov         di, ax
-	; obtengo la posicion del arreglo
 	             xor         ax, ax
 	             mov         ax, posiciones[di]
-	; comparo la posicion en la que voy con la que deberia de ir
 	             cmp         ax, cx
 	             je          AGREGAR
-	; si no es lo posicion continuo a la siguiente
 	             jmp         AUMENTAR
 
 	AUMENTAR:    
-	; limpio el registro di y la cadena auxiliar
 	             xor         di, di
 	             clean       auxCadena, SIZEOF auxCadena
-	; incremento el contador
 	             inc         cx
-	; compara que cx no se mas grande que el tamaño del arreglo de posiciones
 	             cmp         cx, cont
-	; si es mas grande significa que ya estan todos colocados
 	             jg          RESTART
-	; sino incremento si para saltar el %
 	             inc         si
-	; continuo a obtener la cadena
 	             jmp         RECORRER
 
 	AGREGAR:     
 	             pushRecords
-	; guardamos el registro
 	             saveOnArray auxCadena, destino
-	; agregamos suparador a la lista
 	             mov         bl, '%'
 	             mov         destino[di], bl
 	             popRecords
-	; incremento al siguiente en contador para la lista de posiciones
 	             inc         cont2
 	             mov         dx, cont2
 	             cmp         dx, cont
@@ -1167,17 +872,11 @@ orderRecords macro origen, destino, posiciones
 	END:         
 
 endm
-
-;reporte de top10 en consola
 reporteTOP macro title, lista, tipo
 	           LOCAL          RECORRER, SEPARAR, IMPRIMIR, END, COMPARAR, PUNTAJE, TIME, SIGUIENTE, ENCABEZADO, TITULO1, TITULO2
-	; indice del arreglo de la lista ordenada
 	           xor            si, si
-	; indice que llevara la cadena auxiliar
 	           xor            di, di
-	; limpiar el contador paara solo imprimir 10
 	           xor            cx, cx
-	; limpiar cadena auxiliar
 	           clean          auxCadena, SIZEOF auxCadena
 	           print          linea
 	           print          salto
@@ -1218,13 +917,10 @@ reporteTOP macro title, lista, tipo
 
 	RECORRER:  
 	           mov            bl, lista[si]
-	; comparamos fin de arreglo
 	           cmp            bl, '$'
 	           je             END
-	; comparamos separador de registro
 	           cmp            bl, '%'
 	           je             SEPARAR
-	; sino pues guardamos en cadena auxiliar
 	           mov            auxCadena[di], bl
 	           inc            si
 	           inc            di
@@ -1232,40 +928,29 @@ reporteTOP macro title, lista, tipo
 
 	SEPARAR:   
 	           pushRecords
-	; separamos el registro
 	           separateRecord auxCadena
 	           popRecords
-	; incrementamos el numero
 	           inc            cx
 	           pushRecords
 	           mov            ax, cx
 	           clean          auxCadena, SIZEOF auxCadena
-	; convertimos el numero a string
 	           to_string      auxCadena
 	           popRecords
 	           jmp            IMPRIMIR
 
 	IMPRIMIR:  
-	; imprimimos el numero
 	           print          auxCadena
-	; imprimivos el punto
 	           print          punto
 	           print          tab1
-	; imprimimos el usuario
 	           print          user
-	; imprimimos espacio en blanco
 	           print          tab
-	; imprimimos nivel
 	           print          tab
 	           print          level
-	; imprimimos espacio en blanco
 	           print          tab1
 	           print          tab
-	; vemos si imprimimos punteo o tiempo
 	           jmp            COMPARAR
 
 	COMPARAR:  
-	; si el tipo es 1 significa es punteo
 	           mov            bl, 49
 	           cmp            bl, tipo
 	           je             PUNTAJE
@@ -1281,11 +966,9 @@ reporteTOP macro title, lista, tipo
 	           jmp            SIGUIENTE
 
 	SIGUIENTE: 
-	; comparamos si ya imprimimos 10
 	           print          salto
 	           cmp            cx, 10
 	           je             END
-	; saltamos el '%'
 	           inc            si
 	           xor            di, di
 	           clean          auxCadena, SIZEOF auxCadena
@@ -1294,27 +977,21 @@ reporteTOP macro title, lista, tipo
 	END:       
 
 endm
-
-; GRAFICAR
-;Activar Modo Video 
 ModoVideoOn macro
 	            mov ax,13h
 	            int 10h
 endm
-;Desactivar Modo Video 
 ModoVideoOff macro
 	             mov ax,3h
 	             int 10h
 endm
-
-; pintar bloque de puntaje
-PintarBloque macro posX,posY,sizeX,sizeY,color		;x0,y0,tamX,tamY,color
+PintarBloque macro posX,posY,sizeX,sizeY,color
 	             LOCAL       EJEX,EJEY,FIN
 	             pushRecords
 	             xor         di,di
 	             xor         si,si
-	             mov         di,posX      	;x
-	             mov         si,posY      	;y
+	             mov         di,posX
+	             mov         si,posY
 	EJEX:        
 	             PintarPixel di,si,color
 	             inc         di
@@ -1335,8 +1012,7 @@ PintarBloque macro posX,posY,sizeX,sizeY,color		;x0,y0,tamX,tamY,color
 	FIN:         
 	             popRecords
 endm
-
-PintarPixel macro posx,posy,color		;x0,y0,color
+PintarPixel macro posx,posy,color
 	            pushRecords
 	            mov         ah,0ch
 	            mov         al,color
@@ -1346,18 +1022,15 @@ PintarPixel macro posx,posy,color		;x0,y0,color
 	            int         10h
 	            popRecords
 endm
-; Activar Modo Video 
 ModoVideoOn macro
 	            mov ax,13h
 	            int 10h
 endm
-; Desactivar Modo Video 
 ModoVideoOff macro
 	             mov ax,3h
 	             int 10h
 endm
-
-PintarLinea macro posX,posY,color,tam,direccion 		;x0,y0,color,largo,direccion(1=horizontal,0=vertical)
+PintarLinea macro posX,posY,color,tam,direccion
 	            LOCAL       DIRECCION1,EJEX,EJEY,FIN
     
 	            push        di
@@ -1403,16 +1076,12 @@ PintarLinea macro posX,posY,color,tam,direccion 		;x0,y0,color,largo,direccion(1
 	            pop         bx
 	            pop         cx
 endm
-
-; pintar cuador
 pintarCuadro macro
 	             PintarLinea 10, 20, blanco, 300, 1
 	             PintarLinea 10, 20, blanco, 170, 0
 	             PintarLinea 10, 190, blanco, 300, 1
 	             PintarLinea 310, 20, blanco, 171, 0
 endm
-
-; mover la posicion del cursor
 moverCursor macro posX, posY
 	            mov ah, 02h
 	            mov bh, 00h
@@ -1420,8 +1089,6 @@ moverCursor macro posX, posY
 	            mov dh, posY
 	            int 10h
 endm
-
-; escribir caracter
 escribirChar macro caracter, color
 	             mov ah, 09h
 	             mov al, caracter
@@ -1430,8 +1097,6 @@ escribirChar macro caracter, color
 	             mov cx, 01h
 	             int 10h
 endm
-
-; escribir cadena en modo video
 escribirCadena macro posX, posY, texto
 	               LOCAL        RECORRER, SALIR, INCREMENTAR
 	               pushRecords
@@ -1551,21 +1216,20 @@ pintarBarras macro lista
 
 endm
 
-; calculamos el color dependiendo 
 selColor macro value
 	         LOCAL RED, BLUE, WHITE, YELLOW, GREEN, SALIR, DEFAULT
-
+	         xor   bx, bx
 	         mov   bx, value
-	         cmp   bx, 21
-	         jl    RED
-	         cmp   bx, 41
-	         jl    BLUE
-	         cmp   bx, 61
-	         jl    YELLOW
-	         cmp   bx, 81
-	         jl    GREEN
+	         cmp   bx, 20
+	         jle   RED
+	         cmp   bx, 40
+	         jle   BLUE
+	         cmp   bx, 60
+	         jle   YELLOW
+	         cmp   bx, 80
+	         jle   GREEN
 	         cmp   bx, 99
-	         jl    WHITE
+	         jle   WHITE
 	         jmp   DEFAULT
 
 	RED:     
@@ -1595,8 +1259,6 @@ selColor macro value
 	SALIR:   
 
 endm
-
-; calculamos la altura
 height macro puntaje
 	       LOCAL SALIR, SALIR2
 	       xor   ax, ax
@@ -1605,11 +1267,8 @@ height macro puntaje
 	       mov   ax, 140
 	       mov   bx, puntaje
 
-	; por si la altura es 0 no hago nada
 	       cmp   bx, 0
 	       je    SALIR
-
-	; 140 px * puntaje / puntaje maximo
 	       mul   bx
 	       xor   bx, bx
 	       mov   bx, max
@@ -1633,8 +1292,6 @@ anchura macro
 	        mov  base, ax
 	        sub  base, 10
 endm
-
-; colocar punteo debajo de la barra
 setPoints macro numero, posX
 	          pushRecords
 	          clean          auxCadena, SIZEOF auxCadena
@@ -1651,8 +1308,6 @@ setPoints macro numero, posX
 	          moverCursor    0, 0
 	          escribirCadena al, 48, auxCadena
 endm
-
-; ordenamiento con grafica
 BubbleSortG macro array, velocidad, forma
 	            LOCAL       JUMP3, JUMP2, JUMP1, ASCENDENTE, DESCENDENTE ,PINTAR
 	            xor         di, di
@@ -1666,26 +1321,25 @@ BubbleSortG macro array, velocidad, forma
 	            mov         dx, array[si]
 	            cmp         dx, '$'
 	            je          JUMP1
-	; comparo si es ascendente o descendente
 	            cmp         forma, 50
 	            je          DESCENDENTE
 	
 	ASCENDENTE: 
 	            cmp         ax, dx
-	            jge         JUMP1
+	            jle         JUMP1
 	            mov         array[di], dx
 	            mov         array[si], ax
 	            jmp         PINTAR
 
 	DESCENDENTE:
 	            cmp         ax, dx
-	            jle         JUMP1
+	            jge         JUMP1
 	            mov         array[di], dx
 	            mov         array[si], ax
 	            jmp         PINTAR
 	PINTAR:     
 	            pushRecords
-	            graphChange array, velocidad
+	            graphChange array, velocidad, burbuja
 	            popRecords
 
 	JUMP1:      
@@ -1700,15 +1354,11 @@ BubbleSortG macro array, velocidad, forma
 	            cmp         cx, cont
 	            jnz         JUMP3
 endm
-
-;graficar el intercambio
-graphChange macro lista, velocidad
+graphChange macro lista, velocidad, name
 	            LOCAL           DECIMAS, UNIDAD, SEGUIR
-	;limpio pantalla
 	            clearScreen
-	; escribimos parte de arriba
 	            pushRecords
-	            escribirCadena  0, 1, burbuja
+	            escribirCadena  0, 1, name
 	            mov             al, speed
 	            mov             speedLabel[11], al
 	            escribirCadena  12, 1, speedLabel
@@ -1745,71 +1395,58 @@ graphChange macro lista, velocidad
 
 	SEGUIR:     
 	            escribirCadena  26, 1, timeLabel
-	; pintar cuadro
 	            pintarCuadro
-	; pintar barra con cam
 	            pintarBarras    lista
 	            speedCalculator velocidad
 	            Delay           time
 endm
 
+
 MenuOrdenamiento macro lista
 	                 LOCAL          ORDENAMIENTO, VELOCIDAD, TIPO, COMPARAR, ORDER1, ORDER2, ORDER3, ORDENAMIENTO, END
 	                 xor            ax, ax
 	ORDENAMIENTO:    
-	; imprimimos el menu de tipo de ordenamiento
 	                 print          linea
 	                 print          orderType
 	                 print          linea
 	                 print          opcionOr
 	                 getChar
-	; comparamos que el caracter ingresado sea valido
 	                 cmp            al, 49
 	                 jl             ORDENAMIENTO
 	                 cmp            al, 51
 	                 jg             ORDENAMIENTO
-	; guardamos seleccion
 	                 mov            orderSel, al
 	                 jmp            VELOCIDAD
 	VELOCIDAD:       
-	; imprimimos seleccion de velocidad
 	                 print          linea
 	                 print          speedSel
 	                 getChar
-	; comparamos que la velocidad ingresada sea valida
 	                 cmp            al, 48
 	                 jl             VELOCIDAD
 	                 cmp            al, 57
 	                 jg             VELOCIDAD
-	; si es correcta la guardamos
 	                 mov            speed, al
 	                 jmp            TIPO
 
 	TIPO:            
-	; imprimimos si deseamos ascendente o descendente
 	                 print          linea
 	                 print          orderType
 	                 print          linea
 	                 print          tipoOrden
 	                 getChar
-	; comparamos que el caracter ingresado sea valido
 	                 cmp            al, 49
 	                 jl             TIPO
 	                 cmp            al, 50
 	                 jg             TIPO
-	; guardamos seleccion
 	                 mov            forma, al
 	                 jmp            COMPARAR
 
 	comparar:        
-	; ordenamiento burbuja
 	                 cmp            orderSel, 49
 	                 je             ORDER1
-	; ordenamiento quicksort
-	                 cmp            orderSel, 49
+	                 cmp            orderSel, 50
 	                 je             ORDER2
-	; ordenamiento shellsort
-	                 cmp            orderSel, 49
+	                 cmp            orderSel, 51
 	                 je             ORDER3
 
 	ORDER1:          
@@ -1819,22 +1456,46 @@ MenuOrdenamiento macro lista
 	                 getChar
 	                 ModoVideoOff
 	                 jmp            END
+
 	ORDER2:          
-	ORDER3:          
-	                 print          aunNo
+	                 obtenerInicial
+	                 ModoVideoOn
+	                 mov            cx, 0
+	                 mov            bx, cont
+	;call           quickSort
+	                 getChar
+	                 ModoVideoOff
 	                 jmp            END
+	ORDER3:          
+	                 obtenerInicial
+	                 pushRecords
+	                 mov            ax, cont
+	                 add            ax, 1
+	                 mov            bx, 2
+	                 mul            bx
+	                 mov            tam, ax
+	                 print          salto
+	                 print          linea
+	                 print          salto
+	                 popRecords
+	;INVOKE         shellSort2,  lista, tam
+	;ModoVideoOn
+	                 ShellSort      lista, speed, forma
+	                 getChar
+	;   ModoVideoOff
+	                 jmp            END
+
 
 	END:             
 
 endm
 
+
 speedCalculator macro velocidad
 	                LOCAL DEFAULT, SALIR
 	                mov   time, 00h
-	; comparar si es 0 asi dejo la velocidad como esta
 	                cmp   velocidad, 48
 	                je    DEFAULT
-	; si no es  hago el calculo
 	                xor   ax, ax
 	                xor   bx, bx
 	                xor   dx, dx
@@ -1897,4 +1558,395 @@ obtenerInicial macro
 	               popRecords
 endm
 
+ShellSort macro array, velocidad, forma
+	             LOCAL       INICIO, COMPARACION1, COMPARACION2, COMPARACION3, TEMPORAL, COMPARACION3, SWAP, SIG1, SIG2, SIG3, FIN
+	             printArray  array
+	             print       salto
+	             print       linea
+	             print       salto
+	             xor         ax, ax
+	             xor         bx, bx
+	             xor         cx, cx
+	             xor         dx, dx
+	             xor         di, di
+	             xor         si, si
 
+	INICIO:      
+	             mov         ax, cont
+	             add         ax, 1
+	             mov         interval, ax
+	             mov         i, ax
+	             mov         bx, 2
+	             div         bx
+	             mov         ah, 0
+	             mov         auxTam, ax
+
+	COMPARACION1:
+	             pushRecords
+	             mov         ax, interval
+	             clean       auxCadena, SIZEOF auxCadena
+	             to_string   auxCadena
+	             print       dis
+	             print       salto
+	             print       auxCadena
+	             print       salto
+	             print       linea
+	             getChar
+	             popRecords
+	             mov         ax, interval
+	             mov         i, ax
+	             cmp         interval, 0
+	             jg          COMPARACION2
+	             jmp         FIN
+
+	COMPARACION2:
+	             xor         ax, ax
+	             mov         ax, tam
+	             cmp         i, ax
+	             jge         SIG1
+	             pushRecords
+	             mov         ax, i
+	             clean       auxCadena, SIZEOF auxCadena
+	             clean       aux, SIZEOF aux
+	             to_string   auxCadena
+	             mov         ax, tam
+	             to_string   aux
+	             print       dif
+	             print       salto
+	             print       auxCadena
+	             print       salto
+	             print       aux
+	             print       salto
+	             print       linea
+	             getChar
+	             popRecords
+
+	TEMPORAL:    
+	             xor         si, si
+	             xor         dx, dx
+	             xor         ax, ax
+	             mov         si, i
+	             mov         dx, array[si]
+	             mov         temp, dx
+	             mov         j, 0
+	             pushRecords
+	             clean       auxCadena, SIZEOF auxCadena
+	             clean       aux, SIZEOF aux
+	             mov         ax, dx
+	             to_string   auxCadena
+	             mov         ax, di
+	             to_string   aux
+	             print       temporary
+	             print       salto
+	             print       auxCadena
+	             print       salto
+	             print       linea
+	             getChar
+	             popRecords
+	             mov         ax, i
+	             mov         j, ax
+		
+
+	COMPARACION3:
+	             mov         ax, interval
+	             cmp         j, ax
+	             jl          SIG2
+	             mov         ax, j
+	             mov         bx, interval
+	             sub         ax, bx
+	             mov         k, ax
+	             xor         di, di
+	             mov         di, ax
+	             mov         bx, array[di]
+	             pushRecords
+	             clean       auxCadena, SIZEOF auxCadena
+	             clean       aux, SIZEOF aux
+	             mov         ax, j
+	             to_string   auxCadena
+	             popRecords
+	             pushRecords
+	             mov         ax,di
+	             to_string   aux
+	             print       valJ
+	             print       salto
+	             print       auxCadena
+	             print       salto
+	             print       valK
+	             print       salto
+	             print       aux
+	             print       salto
+	             popRecords
+	             pushRecords
+	             clean       auxCadena, SIZEOF auxCadena
+	             mov         ax, bx
+	             to_string   auxCadena
+	             print       comp
+	             print       salto
+	             print       auxCadena
+	             print       salto
+	             print       linea
+	             getChar
+	             popRecords
+	             cmp         bx, temp
+	             jle         SIG2
+
+	SWAP:        
+	             mov         si, j
+	             mov         di, k
+	             pushRecords
+	             clean       auxCadena, SIZEOF auxCadena
+	             clean       aux, SIZEOF aux
+	             mov         ax, si
+	             to_string   auxCadena
+	             popRecords
+	             pushRecords
+	             mov         ax, di
+	             to_string   aux
+	             print       cambio
+	             print       salto
+	             print       auxCadena
+	             print       salto
+	             print       aux
+	             print       salto
+	             print       linea
+	             getChar
+	             popRecords
+	             mov         bx, array[di]
+	             mov         array[si], bx
+	             pushRecords
+	             printArray  array
+	             print       salto
+	             print       linea
+	             print       salto
+	             getChar
+	             popRecords
+				 
+	SIG3:        
+	             mov         bx, interval
+	             mov         ax, j
+	             pushRecords
+	             clean       auxCadena, SIZEOF auxCadena
+	             to_string   auxCadena
+	             print       valJ
+	             print       salto
+	             print       auxCadena
+	             print       salto
+	             print       linea
+	             getChar
+	             popRecords
+	             sub         ax, bx
+	             mov         j, ax
+	             jmp         COMPARACION3
+		
+	SIG2:        
+	             mov         si, j
+	             mov         ax, temp
+	             mov         array[si], ax
+	             mov         temp, 0
+	             add         i, 2
+	             jmp         COMPARACION2
+
+	SIG1:        
+	             mov         ax, auxTam
+	             mov         bx, 2
+	             div         bl
+	             mov         dl, ah
+	             mov         ah,0
+	             mov         auxTam, ax
+	             mul         bx
+	             mov         interval, ax
+	             jmp         COMPARACION1
+
+	FIN:         
+endm
+
+partition macro arreglo,begin,fini
+	          LOCAL       INICIO,FIN,INIFOR,FOR,FUERAFOR,FINFOR,DENTROFOR,DENTROIF,RETORNAR
+	          PUSH        si
+	          PUSH        cx
+	          PUSH        di
+	          PUSH        ax
+	          PUSH        bx
+	          xor         si,si
+	          xor         cx,cx
+	          xor         ax,ax
+	          xor         di,di
+	          xor         bx,bx
+	          xor         dx,dx
+     
+	          pushRecords
+	          graphChange arreglo, speed, shell
+	          popRecords
+
+	INICIO:   
+	; PIVOT CX, I di, J si
+	          xor         si,si
+	          mov         si,fini[0]
+	          mov         ax,si
+	          xor         si,si
+	          mov         si,2
+	          imul        si
+	          xor         si,si
+	          mov         si,ax
+	          xor         ax,ax
+	          mov         cx,arreglo[si]                                                   	; se setea pivote en cx
+	          xor         si,si
+	  
+	          mov         si,begin[0]
+	          dec         si
+	          mov         di,si                                                            	; se setea el i en di
+	          xor         si,si
+	          jmp         INIFOR
+      
+
+	INIFOR:   
+	          xor         si,si
+	          mov         si,begin[0]                                                      	; seteamos j a si
+	          jmp         FOR
+
+	FOR:      
+	          cmp         si,fini[0]
+	          jl          DENTROFOR
+	          jmp         FUERAFOR
+
+
+	DENTROFOR:
+	;IF:
+	          push        si
+	          xor         ax,ax
+	          mov         ax,si
+	          xor         si,si
+	          mov         si,2
+	          imul        si
+	          xor         si,si
+	          mov         si,ax
+	          xor         ax,ax
+		 
+	          cmp         arreglo[si],cx
+	          jl          DENTROIF
+	          cmp         arreglo[si],cx
+	          je          DENTROIF
+	          pop         si
+	          jmp         FINFOR
+
+
+	DENTROIF: 
+	          pop         si
+	          xor         dx,dx
+	          inc         di
+	          xor         bx,bx
+	          xor         dx,dx
+	          push        di
+	          xor         ax,ax
+	          mov         ax,di
+	          xor         di,di
+	          mov         di,2
+	          imul        di
+	          xor         di,di
+	          mov         di,ax
+	          xor         ax,ax
+	          mov         bx,arreglo[di]                                                   	; guarda el auxiliar
+		 
+		 
+	          push        si
+	          xor         ax,ax
+	          mov         ax,si
+	          xor         si,si
+	          mov         si,2
+	          imul        si
+	          xor         si,si
+	          mov         si,ax
+	          xor         ax,ax
+        
+	          mov         dx,arreglo[si]
+	          mov         arreglo[di],dx
+	          mov         arreglo[si],bx
+	          xor         dx,dx
+	          xor         bx,bx
+	          xor         si,si
+	          pop         si
+	          xor         di,di
+	          pop         di
+	          pushRecords
+	          graphChange arreglo, speed, quick
+	          popRecords
+	          jmp         FINFOR
+
+	FINFOR:   
+	          inc         si
+	          jmp         FOR
+
+	  	 
+	FUERAFOR: 
+	          push        di
+	          xor         ax,ax
+	          inc         di
+	          mov         ax,di
+	          xor         di,di
+	          mov         di,2
+	          imul        di
+	          xor         di,di
+	          mov         di,ax
+	          xor         ax,ax
+	          mov         bx,arreglo[di]                                                   	; guarda el auxiliar
+		 
+		 
+	          push        si
+	          xor         ax,ax
+	          xor         si,si
+	          mov         si,fini[0]
+	          mov         ax,si
+	          xor         si,si
+	          mov         si,2
+	          imul        si
+	          xor         si,si
+	          mov         si,ax
+	          xor         ax,ax
+        
+	          mov         dx,arreglo[si]
+	          mov         arreglo[di],dx
+	          mov         arreglo[si],bx
+	          xor         dx,dx
+	          xor         bx,bx
+	          xor         si,si
+	          pop         si
+	          xor         di,di
+	          pop         di
+	          pushRecords
+	          graphChange arreglo, speed, quick
+	          popRecords
+	          jmp         RETORNAR
+
+	RETORNAR: 
+	          inc         di
+	          mov         dx,di
+	          jmp         FIN
+
+	FIN:      
+	          xor         si,si
+	          xor         cx,cx
+	          xor         ax,ax
+	          xor         di,di
+	          xor         bx,bx
+
+	          POP         bx
+	          POP         ax
+	          POP         di
+	          POP         cx
+	          POP         si
+endm
+
+
+clean2 macro array, numBytes
+	           LOCAL       RepeatLoop
+	           pushRecords
+	           xor         si, si
+	           xor         cx, cx
+	           mov         cx, numBytes
+	RepeatLoop:
+	           mov         array[si], '$'
+	           inc         si
+	           inc         si
+	           Loop        RepeatLoop
+	           popRecords
+endm

@@ -1,7 +1,7 @@
 ;===============SECCION DE MACROS ===========================
 include macros.asm
 ;================= DECLARACION TIPO DE EJECUTABLE ============
-.model small 
+.model huge, C
 .stack 100h 
 .data
 	;================ INICIO DE SESION ========================
@@ -61,7 +61,14 @@ include macros.asm
 	max                 dw  0
 	base                dw  0
 	separacion          dw  10
-	
+
+	i                   dw  0
+	j                   dw  0
+	k                   dw  0
+	interval            dw  0
+	temp                dw  0
+	tam                 dw  0
+	auxTam              dw  0
 
 	var1                db  0
 	var2                db  0
@@ -77,6 +84,10 @@ include macros.asm
 	speed               db  0
 	time                dw  0
 	forma               db  0
+	beginarr            dw  1 dup('$')
+	finisharr           dw  1 dup('$')
+	first               dw  0
+	last                dw  0
 
 	date                db  '00/00/0000'
 	hour                db  '00:00:00'
@@ -121,6 +132,8 @@ include macros.asm
 	topPuntaje          db  'TOP 10 PUNTOS', '$'
 	topTiempos          db  'TOP 10 TIEMPOS', '$'
 	burbuja             db  'BUBBLESORT', '$'
+	shell               db  'SHELLSORT', '$'
+	quick               db  'QUICKSORT', '$'
 	speedLabel          db  'VELOCIDAD: ', '$', '$'
 	timeLabel           db  'TIEMPO: 00:0' ,'$', '$'
 	minInicial          db  0
@@ -138,7 +151,15 @@ include macros.asm
 
 	color               db  0fh
 
-	entra           db 0ah,0dh,'entra','$'
+	entra               db  0ah,0dh,'entra','$'
+	dis                 db  'Distancia:','$'
+	dif                 db  'Diferencia :','$'
+	cambio              db  'Cambio:','$'
+	temporary           db  'Temporal:','$'
+	valJ                db  'Valor J:','$'
+	valK                db  'Valor K:','$'
+	comp                db  'Comparacion:','$'
+	
 .code ;segmento de código
 ;================== SECCION DE CODIGO ===========================
 	main proc 
@@ -262,5 +283,59 @@ include macros.asm
 	    	getChar
 	    	jmp Menu
 	main endp
+	quickSort proc                        		; poceso para quicksort
+	          pushRecords
+	INICIO:   
+	;cx begin
+	;bx finish
+	          cmp       cx,bx
+	          jl        RAPIDO
+	          jmp       FIN
+	RAPIDO:    
+      
+	          mov       beginarr[0],cx
+	          mov       finisharr[0],bx
+	          partition orderedPoints,beginarr,finisharr	; macro para hacer el ordenamiento donde puntosarr es el arreglo a ordenar
+
+      
+	          push      dx
+	          push      cx
+	          xor       si,si
+	          mov       si,dx
+	          dec       si
+	          push      bx
+	          xor       bx,bx
+	          mov       bx,si
+			  call quickSort; llamada recursiva
+	          xor       bx,bx
+	          pop       bx
+    
+	          xor       cx,cx
+	          pop       cx
+	          xor       dx,dx
+	          pop       dx
+    
+	          push      dx
+	          push      bx
+	          xor       si,si
+	          mov       si,dx
+	          inc       si
+	          push      cx
+	          xor       cx,cx
+	          mov       cx,si
+			  call quickSort; llamada recursiva
+	          xor       cx,cx
+	          pop       cx
+	          xor       cx,cx
+	          pop       bx
+	          xor       dx,dx
+	          pop       dx
+	          jmp       FIN
+
+	FIN:      
+
+	          popRecords
+			  ret
+quickSort endp
 ;================ FIN DE SECCION DE CODIGO ========================
 end
