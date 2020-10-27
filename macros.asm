@@ -567,6 +567,10 @@ login macro user, pass
 	            transferArray tiempos, orderedTimes
 	            BubbleSort    orderedTimes, positionsListTimes
 	            orderRecords  listaPunteos, orderedUsersTimes, positionsListTimes
+	            mov           ax, orderedPoints[0]
+	            mov           maxP, ax
+	            mov           ax, orderedTimes[0]
+	            mov           maxT, ax
 	            jmp           AdminMenu
 
 	COMPARE:    
@@ -1478,11 +1482,10 @@ MenuOrdenamiento macro lista
 	                 print          linea
 	                 print          salto
 	                 popRecords
-	;INVOKE         shellSort2,  lista, tam
-	;ModoVideoOn
+	                 ModoVideoOn
 	                 ShellSort      lista, speed, forma
 	                 getChar
-	;   ModoVideoOff
+	                 ModoVideoOff
 	                 jmp            END
 
 
@@ -1559,7 +1562,7 @@ obtenerInicial macro
 endm
 
 ShellSort macro array, velocidad, forma
-	             LOCAL       INICIO, COMPARACION1, COMPARACION2, COMPARACION3, TEMPORAL, COMPARACION3, SWAP, SIG1, SIG2, SIG3, FIN
+	             LOCAL       INICIO, COMPARACION1, COMPARACION2, COMPARACION3, TEMPORAL, COMPARACION3, SWAP, SIG1, SIG2, SIG3, FIN, ASCENDENTE, DESCENDENTE
 	             printArray  array
 	             print       salto
 	             print       linea
@@ -1582,17 +1585,6 @@ ShellSort macro array, velocidad, forma
 	             mov         auxTam, ax
 
 	COMPARACION1:
-	             pushRecords
-	             mov         ax, interval
-	             clean       auxCadena, SIZEOF auxCadena
-	             to_string   auxCadena
-	             print       dis
-	             print       salto
-	             print       auxCadena
-	             print       salto
-	             print       linea
-	             getChar
-	             popRecords
 	             mov         ax, interval
 	             mov         i, ax
 	             cmp         interval, 0
@@ -1604,22 +1596,6 @@ ShellSort macro array, velocidad, forma
 	             mov         ax, tam
 	             cmp         i, ax
 	             jge         SIG1
-	             pushRecords
-	             mov         ax, i
-	             clean       auxCadena, SIZEOF auxCadena
-	             clean       aux, SIZEOF aux
-	             to_string   auxCadena
-	             mov         ax, tam
-	             to_string   aux
-	             print       dif
-	             print       salto
-	             print       auxCadena
-	             print       salto
-	             print       aux
-	             print       salto
-	             print       linea
-	             getChar
-	             popRecords
 
 	TEMPORAL:    
 	             xor         si, si
@@ -1629,20 +1605,6 @@ ShellSort macro array, velocidad, forma
 	             mov         dx, array[si]
 	             mov         temp, dx
 	             mov         j, 0
-	             pushRecords
-	             clean       auxCadena, SIZEOF auxCadena
-	             clean       aux, SIZEOF aux
-	             mov         ax, dx
-	             to_string   auxCadena
-	             mov         ax, di
-	             to_string   aux
-	             print       temporary
-	             print       salto
-	             print       auxCadena
-	             print       salto
-	             print       linea
-	             getChar
-	             popRecords
 	             mov         ax, i
 	             mov         j, ax
 		
@@ -1658,82 +1620,33 @@ ShellSort macro array, velocidad, forma
 	             xor         di, di
 	             mov         di, ax
 	             mov         bx, array[di]
-	             pushRecords
-	             clean       auxCadena, SIZEOF auxCadena
-	             clean       aux, SIZEOF aux
-	             mov         ax, j
-	             to_string   auxCadena
-	             popRecords
-	             pushRecords
-	             mov         ax,di
-	             to_string   aux
-	             print       valJ
-	             print       salto
-	             print       auxCadena
-	             print       salto
-	             print       valK
-	             print       salto
-	             print       aux
-	             print       salto
-	             popRecords
-	             pushRecords
-	             clean       auxCadena, SIZEOF auxCadena
-	             mov         ax, bx
-	             to_string   auxCadena
-	             print       comp
-	             print       salto
-	             print       auxCadena
-	             print       salto
-	             print       linea
-	             getChar
-	             popRecords
+	             cmp         forma, 50
+	             je          DESCENDENTE
+
+	ASCENDENTE:  
 	             cmp         bx, temp
-	             jle         SIG2
+	             jg          SWAP
+	             jmp         SIG2
+
+	DESCENDENTE: 
+	             cmp         bx, temp
+	             jl          SWAP
+	             jmp         SIG2
+
 
 	SWAP:        
 	             mov         si, j
 	             mov         di, k
-	             pushRecords
-	             clean       auxCadena, SIZEOF auxCadena
-	             clean       aux, SIZEOF aux
-	             mov         ax, si
-	             to_string   auxCadena
-	             popRecords
-	             pushRecords
 	             mov         ax, di
-	             to_string   aux
-	             print       cambio
-	             print       salto
-	             print       auxCadena
-	             print       salto
-	             print       aux
-	             print       salto
-	             print       linea
-	             getChar
-	             popRecords
 	             mov         bx, array[di]
 	             mov         array[si], bx
 	             pushRecords
-	             printArray  array
-	             print       salto
-	             print       linea
-	             print       salto
-	             getChar
+	             graphChange array, velocidad, burbuja
 	             popRecords
 				 
 	SIG3:        
 	             mov         bx, interval
 	             mov         ax, j
-	             pushRecords
-	             clean       auxCadena, SIZEOF auxCadena
-	             to_string   auxCadena
-	             print       valJ
-	             print       salto
-	             print       auxCadena
-	             print       salto
-	             print       linea
-	             getChar
-	             popRecords
 	             sub         ax, bx
 	             mov         j, ax
 	             jmp         COMPARACION3
@@ -1742,6 +1655,9 @@ ShellSort macro array, velocidad, forma
 	             mov         si, j
 	             mov         ax, temp
 	             mov         array[si], ax
+	             pushRecords
+	             graphChange array, velocidad, burbuja
+	             popRecords
 	             mov         temp, 0
 	             add         i, 2
 	             jmp         COMPARACION2

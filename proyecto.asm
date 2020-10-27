@@ -59,6 +59,8 @@ include macros.asm
 
 	altura              dw  0
 	max                 dw  0
+	maxP                dw  0
+	maxT                dw  0
 	base                dw  0
 	separacion          dw  10
 
@@ -226,7 +228,7 @@ include macros.asm
 			mov tipo, 49
 			reporteTop topPuntaje, orderedUsersPoints, tipo
 			xor ax, ax
-			mov ax, orderedPoints[0]
+			mov ax, maxP
 			; colocamos el valor mas alto 
 			mov max, ax
 			getChar
@@ -249,7 +251,7 @@ include macros.asm
 			mov tipo, 50
 			reporteTop topTiempos, orderedUsersTimes, tipo
 			xor ax, ax
-			mov ax, orderedTimes[0]
+			mov ax, maxT
 			; colocamos el valor mas alto 
 			mov max, ax
 			getChar
