@@ -54,12 +54,14 @@ createFile macro buffer, handle
 	           jc  ErrorCrear
 endm
 writeFile macro numbytes, buffer, handle
-	          mov ah, 40h
-	          mov bx,handle
-	          mov cx, numbytes
-	          lea dx,buffer
-	          int 21h
-	          jc  ErrorEscribir
+	          pushRecords
+	          mov         ah, 40h
+	          mov         bx,handle
+	          mov         cx, numbytes
+	          lea         dx,buffer
+	          int         21h
+	          popRecords
+	          jc          ErrorEscribir
 endm
 openFile macro ruta, handle
 	         mov ah,3dh
@@ -366,6 +368,8 @@ verifyUser macro user
 	VALIDAR:   
 	           cmp       si, 7
 	           jg        ERRORSIZE
+	           cmp       si, 1
+	           jl        ERRORSIZE
 	           jmp       EXISTENCIA
 	
 	EXISTENCIA:
@@ -877,27 +881,49 @@ orderRecords macro origen, destino, posiciones
 
 endm
 reporteTOP macro title, lista, tipo
-	           LOCAL          RECORRER, SEPARAR, IMPRIMIR, END, COMPARAR, PUNTAJE, TIME, SIGUIENTE, ENCABEZADO, TITULO1, TITULO2
+	           LOCAL          RECORRER, SEPARAR, IMPRIMIR, END, COMPARAR, PUNTAJE, TIME, SIGUIENTE, ENCABEZADO, TITULO1, TITULO2, INICIO
 	           xor            si, si
 	           xor            di, di
 	           xor            cx, cx
+
+	INICIO:    
+	           writeFile      SIZEOF linea - 1, linea, handleFichero
+	           writeFile      SIZEOF encab - 1, encab, handleFichero
+	           writeFile      SIZEOF datos - 1, datos, handleFichero
+			   
 	           clean          auxCadena, SIZEOF auxCadena
 	           print          linea
+	           writeFile      SIZEOF linea - 1, linea, handleFichero
 	           print          salto
+	           writeFile      SIZEOF salto - 1, salto, handleFichero
 	           print          tab
+	           writeFile      SIZEOF tab - 1, tab, handleFichero
 	           print          tab
+	           writeFile      SIZEOF tab - 1, tab, handleFichero
 	           print          title
+	           writeFile      SIZEOF title - 1, title, handleFichero
 	           print          salto
+	           writeFile      SIZEOF salto - 1, salto, handleFichero
 	           print          linea
+	           writeFile      SIZEOF linea - 1, linea, handleFichero
 	           print          salto
+	           writeFile      SIZEOF salto - 1, salto, handleFichero
 	           print          numeral
+	           writeFile      SIZEOF numeral - 1, numeral, handleFichero
 	           print          tab1
+	           writeFile      SIZEOF tab1 - 1, tab1, handleFichero
 	           print          usuarioT
+	           writeFile      SIZEOF usuarioT - 1, usuarioT, handleFichero
 	           print          tab
+	           writeFile      SIZEOF tab - 1, tab, handleFichero
 	           print          tab
+	           writeFile      SIZEOF tab - 1, tab, handleFichero
 	           print          nivel
+	           writeFile      SIZEOF nivel - 1, nivel, handleFichero
 	           print          tab1
+	           writeFile      SIZEOF tab1 - 1, tab1, handleFichero
 	           print          tab
+	           writeFile      SIZEOF tab - 1, tab, handleFichero
 
 	ENCABEZADO:
 	           mov            bl, 49
@@ -907,16 +933,24 @@ reporteTOP macro title, lista, tipo
 
 	TITULO1:   
 	           print          punteoT
+	           writeFile      SIZEOF punteoT - 1, punteoT, handleFichero
 	           print          salto
+	           writeFile      SIZEOF salto - 1, salto, handleFichero
 	           print          linea
+	           writeFile      SIZEOF linea - 1, linea, handleFichero
 	           print          salto
+	           writeFile      SIZEOF salto - 1, salto, handleFichero
 	           jmp            RECORRER
 
 	TITULO2:   
 	           print          tiempoT
+	           writeFile      SIZEOF tiempoT - 1, tiempoT, handleFichero
 	           print          salto
+	           writeFile      SIZEOF salto - 1, salto, handleFichero
 	           print          linea
+	           writeFile      SIZEOF linea - 1, linea, handleFichero
 	           print          salto
+	           writeFile      SIZEOF salto - 1, salto, handleFichero
 	           jmp            RECORRER
 
 	RECORRER:  
@@ -944,14 +978,26 @@ reporteTOP macro title, lista, tipo
 
 	IMPRIMIR:  
 	           print          auxCadena
+	           quitarDolar    auxCadena
+	           writeFile      di, auxCadena, handleFichero
 	           print          punto
+	           writeFile      SIZEOF punto - 1, punto, handleFichero
 	           print          tab1
+	           writeFile      SIZEOF tab1 - 1, tab1, handleFichero
 	           print          user
+	           quitarDolar    user
+	           writeFile      di, user, handleFichero
 	           print          tab
+	           writeFile      SIZEOF tab - 1, tab, handleFichero
 	           print          tab
+	           writeFile      SIZEOF tab - 1, tab, handleFichero
 	           print          level
+	           quitarDolar    level
+	           writeFile      di, level, handleFichero
 	           print          tab1
+	           writeFile      SIZEOF tab - 1, tab, handleFichero
 	           print          tab
+	           writeFile      SIZEOF tab - 1, tab, handleFichero
 	           jmp            COMPARAR
 
 	COMPARAR:  
@@ -962,15 +1008,21 @@ reporteTOP macro title, lista, tipo
 
 	PUNTAJE:   
 	           print          punteo
+	           quitarDolar    punteo
+	           writeFile      di, punteo, handleFichero
 	           jmp            SIGUIENTE
 
 	TIME:      
 	           print          tiempo
+	           quitarDolar    tiempo
+	           writeFile      di, tiempo, handleFichero
 	           print          segundo
+	           writeFile      SIZEOF segundo - 1, segundo, handleFichero
 	           jmp            SIGUIENTE
 
 	SIGUIENTE: 
 	           print          salto
+	           writeFile      SIZEOF salto - 1, salto, handleFichero
 	           cmp            cx, 10
 	           je             END
 	           inc            si
@@ -979,6 +1031,19 @@ reporteTOP macro title, lista, tipo
 	           jmp            RECORRER
 
 	END:       
+
+endm
+quitarDolar macro buffer
+	            LOCAL RECORRER, SALIR
+	            xor   di, di
+	RECORRER:   
+	            mov   bl, buffer[di]
+	            cmp   bl, '$'
+	            je    SALIR
+	            inc   di
+	            jmp   RECORRER
+
+	SALIR:      
 
 endm
 ModoVideoOn macro
@@ -1333,6 +1398,7 @@ BubbleSortG macro array, velocidad, forma
 	            jle         JUMP1
 	            mov         array[di], dx
 	            mov         array[si], ax
+	            mov         valAux, ax
 	            jmp         PINTAR
 
 	DESCENDENTE:
@@ -1340,10 +1406,11 @@ BubbleSortG macro array, velocidad, forma
 	            jge         JUMP1
 	            mov         array[di], dx
 	            mov         array[si], ax
+	            mov         valAux, ax
 	            jmp         PINTAR
 	PINTAR:     
 	            pushRecords
-	            graphChange array, velocidad, burbuja
+	            graphChange array, velocidad, burbuja ,valAux
 	            popRecords
 
 	JUMP1:      
@@ -1358,7 +1425,7 @@ BubbleSortG macro array, velocidad, forma
 	            cmp         cx, cont
 	            jnz         JUMP3
 endm
-graphChange macro lista, velocidad, name
+graphChange macro lista, velocidad, name, valor
 	            LOCAL           DECIMAS, UNIDAD, SEGUIR
 	            clearScreen
 	            pushRecords
@@ -1402,7 +1469,7 @@ graphChange macro lista, velocidad, name
 	            pintarCuadro
 	            pintarBarras    lista
 	            speedCalculator velocidad
-	            Delay           time
+	            setHz           valor, time
 endm
 
 
@@ -1463,10 +1530,12 @@ MenuOrdenamiento macro lista
 
 	ORDER2:          
 	                 obtenerInicial
+	                 clean2         arrQuick, SIZEOF arrQuick
+	                 transferArray  lista, arrQuick
 	                 ModoVideoOn
-	                 mov            cx, 0
-	                 mov            bx, cont
-	;call           quickSort
+	                 mov            cx,0
+	                 mov            bx,cont
+	                 call           quickSort
 	                 getChar
 	                 ModoVideoOff
 	                 jmp            END
@@ -1563,10 +1632,6 @@ endm
 
 ShellSort macro array, velocidad, forma
 	             LOCAL       INICIO, COMPARACION1, COMPARACION2, COMPARACION3, TEMPORAL, COMPARACION3, SWAP, SIG1, SIG2, SIG3, FIN, ASCENDENTE, DESCENDENTE
-	             printArray  array
-	             print       salto
-	             print       linea
-	             print       salto
 	             xor         ax, ax
 	             xor         bx, bx
 	             xor         cx, cx
@@ -1640,8 +1705,9 @@ ShellSort macro array, velocidad, forma
 	             mov         ax, di
 	             mov         bx, array[di]
 	             mov         array[si], bx
+	             mov         valAux, bx
 	             pushRecords
-	             graphChange array, velocidad, burbuja
+	             graphChange array, velocidad, shell, valAux
 	             popRecords
 				 
 	SIG3:        
@@ -1655,8 +1721,9 @@ ShellSort macro array, velocidad, forma
 	             mov         si, j
 	             mov         ax, temp
 	             mov         array[si], ax
+	             mov         valAux, ax
 	             pushRecords
-	             graphChange array, velocidad, burbuja
+	             graphChange array, velocidad, shell, valAux
 	             popRecords
 	             mov         temp, 0
 	             add         i, 2
@@ -1677,182 +1744,187 @@ ShellSort macro array, velocidad, forma
 endm
 
 partition macro arreglo,begin,fini
-	          LOCAL       INICIO,FIN,INIFOR,FOR,FUERAFOR,FINFOR,DENTROFOR,DENTROIF,RETORNAR
-	          PUSH        si
-	          PUSH        cx
-	          PUSH        di
-	          PUSH        ax
-	          PUSH        bx
-	          xor         si,si
-	          xor         cx,cx
-	          xor         ax,ax
-	          xor         di,di
-	          xor         bx,bx
-	          xor         dx,dx
+	            LOCAL       INICIO,FIN,INIFOR,FOR,FUERAFOR,FINFOR,DENTROFOR,DENTROIF,RETORNAR, ASCENDENTE, DESCENDENTE
+	            PUSH        si
+	            PUSH        cx
+	            PUSH        di
+	            PUSH        ax
+	            PUSH        bx
+	            xor         si,si
+	            xor         cx,cx
+	            xor         ax,ax
+	            xor         di,di
+	            xor         bx,bx
+	            xor         dx,dx
      
-	          pushRecords
-	          graphChange arreglo, speed, shell
-	          popRecords
+	;graficar
 
-	INICIO:   
+	INICIO:     
 	; PIVOT CX, I di, J si
-	          xor         si,si
-	          mov         si,fini[0]
-	          mov         ax,si
-	          xor         si,si
-	          mov         si,2
-	          imul        si
-	          xor         si,si
-	          mov         si,ax
-	          xor         ax,ax
-	          mov         cx,arreglo[si]                                                   	; se setea pivote en cx
-	          xor         si,si
+	            xor         si,si
+	            mov         si,fini[0]
+	            mov         ax,si
+	            xor         si,si
+	            mov         si,2
+	            imul        si
+	            xor         si,si
+	            mov         si,ax
+	            xor         ax,ax
+	            mov         cx,arreglo[si]                                                                            	; se setea pivote en cx
+	            xor         si,si
 	  
-	          mov         si,begin[0]
-	          dec         si
-	          mov         di,si                                                            	; se setea el i en di
-	          xor         si,si
-	          jmp         INIFOR
+	            mov         si,begin[0]
+	            dec         si
+	            mov         di,si                                                                                     	; se setea el i en di
+	            xor         si,si
+	            jmp         INIFOR
       
 
-	INIFOR:   
-	          xor         si,si
-	          mov         si,begin[0]                                                      	; seteamos j a si
-	          jmp         FOR
+	INIFOR:     
+	            xor         si,si
+	            mov         si,begin[0]                                                                               	; seteamos j a si
+	            jmp         FOR
 
-	FOR:      
-	          cmp         si,fini[0]
-	          jl          DENTROFOR
-	          jmp         FUERAFOR
+	FOR:        
+	            cmp         si,fini[0]
+	            jl          DENTROFOR
+	            jmp         FUERAFOR
 
 
-	DENTROFOR:
+	DENTROFOR:  
 	;IF:
-	          push        si
-	          xor         ax,ax
-	          mov         ax,si
-	          xor         si,si
-	          mov         si,2
-	          imul        si
-	          xor         si,si
-	          mov         si,ax
-	          xor         ax,ax
-		 
-	          cmp         arreglo[si],cx
-	          jl          DENTROIF
-	          cmp         arreglo[si],cx
-	          je          DENTROIF
-	          pop         si
-	          jmp         FINFOR
+	            push        si
+	            xor         ax,ax
+	            mov         ax,si
+	            xor         si,si
+	            mov         si,2
+	            imul        si
+	            xor         si,si
+	            mov         si,ax
+	            xor         ax,ax
+	            cmp         forma, 50
+	            je          DESCENDENTE
 
+	ASCENDENTE: 
+	            cmp         arreglo[si],cx
+	            jle         DENTROIF
+	            pop         si
+	            jmp         FINFOR
 
-	DENTROIF: 
-	          pop         si
-	          xor         dx,dx
-	          inc         di
-	          xor         bx,bx
-	          xor         dx,dx
-	          push        di
-	          xor         ax,ax
-	          mov         ax,di
-	          xor         di,di
-	          mov         di,2
-	          imul        di
-	          xor         di,di
-	          mov         di,ax
-	          xor         ax,ax
-	          mov         bx,arreglo[di]                                                   	; guarda el auxiliar
+	DESCENDENTE:
+	            cmp         arreglo[si],cx
+	            jGe         DENTROIF
+	            pop         si
+	            jmp         FINFOR
+
+	DENTROIF:   
+	            pop         si
+	            xor         dx,dx
+	            inc         di
+	            xor         bx,bx
+	            xor         dx,dx
+	            push        di
+	            xor         ax,ax
+	            mov         ax,di
+	            xor         di,di
+	            mov         di,2
+	            imul        di
+	            xor         di,di
+	            mov         di,ax
+	            xor         ax,ax
+	            mov         bx,arreglo[di]                                                                            	; guarda el auxiliar
 		 
 		 
-	          push        si
-	          xor         ax,ax
-	          mov         ax,si
-	          xor         si,si
-	          mov         si,2
-	          imul        si
-	          xor         si,si
-	          mov         si,ax
-	          xor         ax,ax
+	            push        si
+	            xor         ax,ax
+	            mov         ax,si
+	            xor         si,si
+	            mov         si,2
+	            imul        si
+	            xor         si,si
+	            mov         si,ax
+	            xor         ax,ax
         
-	          mov         dx,arreglo[si]
-	          mov         arreglo[di],dx
-	          mov         arreglo[si],bx
-	          xor         dx,dx
-	          xor         bx,bx
-	          xor         si,si
-	          pop         si
-	          xor         di,di
-	          pop         di
-	          pushRecords
-	          graphChange arreglo, speed, quick
-	          popRecords
-	          jmp         FINFOR
+	            mov         dx,arreglo[si]
+	            mov         arreglo[di],dx
+	            mov         arreglo[si],bx
+	            mov         valAux, bx
+	            pushRecords
+	            graphChange arreglo, speed, quick, valAux
+	            popRecords
 
-	FINFOR:   
-	          inc         si
-	          jmp         FOR
+	            xor         dx,dx
+	            xor         bx,bx
+	            xor         si,si
+	            pop         si
+	            xor         di,di
+	            pop         di
+	            jmp         FINFOR
+
+	FINFOR:     
+	            inc         si
+	            jmp         FOR
 
 	  	 
-	FUERAFOR: 
-	          push        di
-	          xor         ax,ax
-	          inc         di
-	          mov         ax,di
-	          xor         di,di
-	          mov         di,2
-	          imul        di
-	          xor         di,di
-	          mov         di,ax
-	          xor         ax,ax
-	          mov         bx,arreglo[di]                                                   	; guarda el auxiliar
+	FUERAFOR:   
+	            push        di
+	            xor         ax,ax
+	            inc         di
+	            mov         ax,di
+	            xor         di,di
+	            mov         di,2
+	            imul        di
+	            xor         di,di
+	            mov         di,ax
+	            xor         ax,ax
+	            mov         bx,arreglo[di]                                                                            	; guarda el auxiliar
 		 
 		 
-	          push        si
-	          xor         ax,ax
-	          xor         si,si
-	          mov         si,fini[0]
-	          mov         ax,si
-	          xor         si,si
-	          mov         si,2
-	          imul        si
-	          xor         si,si
-	          mov         si,ax
-	          xor         ax,ax
+	            push        si
+	            xor         ax,ax
+	            xor         si,si
+	            mov         si,fini[0]
+	            mov         ax,si
+	            xor         si,si
+	            mov         si,2
+	            imul        si
+	            xor         si,si
+	            mov         si,ax
+	            xor         ax,ax
         
-	          mov         dx,arreglo[si]
-	          mov         arreglo[di],dx
-	          mov         arreglo[si],bx
-	          xor         dx,dx
-	          xor         bx,bx
-	          xor         si,si
-	          pop         si
-	          xor         di,di
-	          pop         di
-	          pushRecords
-	          graphChange arreglo, speed, quick
-	          popRecords
-	          jmp         RETORNAR
+	            mov         dx,arreglo[si]
+	            mov         arreglo[di],dx
+	            mov         arreglo[si],bx
+	            mov         valAux, bx
+	            pushRecords
+	            graphChange arreglo, speed, quick, valAux
+	            popRecords
+	            xor         dx,dx
+	            xor         bx,bx
+	            xor         si,si
+	            pop         si
+	            xor         di,di
+	            pop         di
+	            
+	            jmp         RETORNAR
 
-	RETORNAR: 
-	          inc         di
-	          mov         dx,di
-	          jmp         FIN
+	RETORNAR:   
+	            inc         di
+	            mov         dx,di
+	            jmp         FIN
 
-	FIN:      
-	          xor         si,si
-	          xor         cx,cx
-	          xor         ax,ax
-	          xor         di,di
-	          xor         bx,bx
-
-	          POP         bx
-	          POP         ax
-	          POP         di
-	          POP         cx
-	          POP         si
+	FIN:        
+	            xor         si,si
+	            xor         cx,cx
+	            xor         ax,ax
+	            xor         di,di
+	            xor         bx,bx
+	            POP         bx
+	            POP         ax
+	            POP         di
+	            POP         cx
+	            POP         si
 endm
-
-
 clean2 macro array, numBytes
 	           LOCAL       RepeatLoop
 	           pushRecords
@@ -1865,4 +1937,74 @@ clean2 macro array, numBytes
 	           inc         si
 	           Loop        RepeatLoop
 	           popRecords
+endm
+setHz macro valor, duracion
+	       LOCAL  INICIO, FIN, RED, BLUE, YELLOW, GREEN, WHITE, OTHER
+	INICIO:
+	       mov    ax, valor
+	       cmp    ax, 20
+	       jle    RED
+	       cmp    ax, 40
+	       jle    BLUE
+	       cmp    ax, 60
+	       jle    YELLOW
+	       cmp    ax, 80
+	       jle    GREEN
+	       cmp    ax, 99
+	       jle    WHITE
+	       jmp    OTHER
+
+	RED:   
+	       sonido 100, duracion
+	       jmp    FIN
+	BLUE:  
+	       sonido 300, duracion
+	       jmp    FIN
+	YELLOW:
+	       sonido 500, duracion
+	       jmp    FIN
+	GREEN: 
+	       sonido 700, duracion
+	       jmp    FIN
+	WHITE: 
+	       sonido 900, duracion
+	       jmp    FIN
+
+	OTHER: 
+	       sonido 1100, duracion
+	       jmp    FIN
+			 
+
+	FIN:   
+endm
+sonido macro hz,delaym
+	       LOCAL inicio,fin
+
+	inicio:
+
+	       push  ax
+	       push  cx
+
+	       xor   ax, ax
+	       xor   cx, cx
+
+	       mov   al, 86h
+	       out   43h, al
+	       mov   ax, (1193180 / hz)
+	       out   42h, al
+	       mov   al, ah
+	       out   42h, al
+	       in    al, 61h
+	       or    al, 00000011b
+	       out   61h, al
+    
+	       Delay delaym
+
+	       in    al, 61h
+	       and   al, 11111100b
+	       out   61h, al
+	fin:   
+	       pop   cx
+	       pop   ax
+
 endm

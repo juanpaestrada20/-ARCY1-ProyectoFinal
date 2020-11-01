@@ -28,6 +28,8 @@ include macros.asm
 	auxCadena           db  100 dup('$')
 	aux                 db  100 dup('$')
 
+	arrQuick            dw  200 dup('$')
+
 	; variable para almacenar el punteo
 	punteo              db  10 dup('$')
 	punteoAux           dw  0
@@ -71,6 +73,13 @@ include macros.asm
 	temp                dw  0
 	tam                 dw  0
 	auxTam              dw  0
+
+	valAux              dw  0
+
+	lowP                dw  0
+	highP               dw  0
+	pi                  dw  0
+	pivot               dw  0
 
 	var1                db  0
 	var2                db  0
@@ -138,6 +147,10 @@ include macros.asm
 	quick               db  'QUICKSORT', '$'
 	speedLabel          db  'VELOCIDAD: ', '$', '$'
 	timeLabel           db  'TIEMPO: 00:0' ,'$', '$'
+
+	puntosFile          db  'puntos.rep', 00h
+	tiempoFile          db  'tiempos.rep', 00h
+	
 	minInicial          db  0
 	minFinal            db  0
 	segInicial          db  0
@@ -211,6 +224,7 @@ include macros.asm
             clean password, SIZEOF password
 			jmp Menu
 		AdminMenu:
+			closeFile      handleFichero
 			print linea
 			print opcionAdmin 
 			print linea
@@ -226,7 +240,12 @@ include macros.asm
 		TopPuntos:
 			print salto
 			mov tipo, 49
+			createFile     puntosFile, handleFichero
+	        openFile       puntosFile, handleFichero
+			pushRecords
 			reporteTop topPuntaje, orderedUsersPoints, tipo
+			popRecords
+			closeFile      handleFichero
 			xor ax, ax
 			mov ax, maxP
 			; colocamos el valor mas alto 
@@ -239,17 +258,24 @@ include macros.asm
 			pintarBarras puntajes
 			getChar
 			popRecords
+			clearScreen
+			ModoVideoOff
 			pushRecords
 			transferArray puntajes, orderedPoints
 			popRecords
-			clearScreen
-			ModoVideoOff
 			MenuOrdenamiento orderedPoints
+			clean2 orderedPoints, SIZEOF orderedPoints
+			transferArray puntajes, orderedPoints
+			clean2 orderedTimes, SIZEOF orderedTimes
+			transferArray tiempos, orderedTimes
 			jmp AdminMenu
 		TopTiempo:
 			print salto
 			mov tipo, 50
+			createFile     tiempoFile, handleFichero
+	        openFile       tiempoFile, handleFichero
 			reporteTop topTiempos, orderedUsersTimes, tipo
+			closeFile      handleFichero
 			xor ax, ax
 			mov ax, maxT
 			; colocamos el valor mas alto 
@@ -260,10 +286,17 @@ include macros.asm
 			pintarCuadro
 			pushRecords
 			pintarBarras tiempos
+			getChar
 			popRecords
-			getChar
+			clearScreen
 			ModoVideoOff
-			getChar
+			pushRecords
+			transferArray tiempos, orderedPoints
+			popRecords
+			MenuOrdenamiento orderedPoints
+			clean2 orderedPoints, SIZEOF orderedPoints
+			transferArray puntajes, orderedPoints
+			clean2 orderedTimes, SIZEOF orderedTimes
 			jmp AdminMenu
 		Salir: 
 			MOV ah,4ch 
@@ -285,59 +318,65 @@ include macros.asm
 	    	getChar
 	    	jmp Menu
 	main endp
-	quickSort proc                        		; poceso para quicksort
-	          pushRecords
-	INICIO:   
-	;cx begin
-	;bx finish
-	          cmp       cx,bx
-	          jl        RAPIDO
-	          jmp       FIN
-	RAPIDO:    
+	quickSort proc ; poceso para quicksort
+    push si
+    push di
+    push dx
+    push ax 
+	INICIO:
+     ;cx begin
+     ;bx finish
+     cmp cx,bx
+	    jl START
+	   jmp FIN
+	 START:
       
-	          mov       beginarr[0],cx
-	          mov       finisharr[0],bx
-	          partition orderedPoints,beginarr,finisharr	; macro para hacer el ordenamiento donde puntosarr es el arreglo a ordenar
+      mov beginarr[0],cx
+      mov finisharr[0],bx
+	    partition arrQuick,beginarr,finisharr ; macro para hacer el ordenamiento donde puntosarr es el arreglo a ordenar
 
       
-	          push      dx
-	          push      cx
-	          xor       si,si
-	          mov       si,dx
-	          dec       si
-	          push      bx
-	          xor       bx,bx
-	          mov       bx,si
-			  call quickSort; llamada recursiva
-	          xor       bx,bx
-	          pop       bx
+    push dx
+    push cx
+	  xor si,si
+	  mov si,dx
+	  dec si
+    push bx
+    xor bx,bx
+    mov bx,si
+    call quickSort; llamada recursiva 
+    xor bx,bx
+    pop bx
     
-	          xor       cx,cx
-	          pop       cx
-	          xor       dx,dx
-	          pop       dx
+    xor cx,cx
+    pop cx
+    xor dx,dx
+    pop dx
     
-	          push      dx
-	          push      bx
-	          xor       si,si
-	          mov       si,dx
-	          inc       si
-	          push      cx
-	          xor       cx,cx
-	          mov       cx,si
-			  call quickSort; llamada recursiva
-	          xor       cx,cx
-	          pop       cx
-	          xor       cx,cx
-	          pop       bx
-	          xor       dx,dx
-	          pop       dx
-	          jmp       FIN
+    push dx
+    push bx
+	  xor si,si
+	  mov si,dx
+	  inc si
+    push cx
+    xor cx,cx
+    mov cx,si
+	  call quickSort; llamada recursiva
+    xor cx,cx
+    pop cx
+    xor cx,cx
+    pop bx
+    xor dx,dx
+    pop dx
+	  jmp FIN
 
-	FIN:      
+	FIN:
 
-	          popRecords
-			  ret
+    pop ax
+    pop dx
+    pop di
+    pop si	
+	ret
 quickSort endp
 ;================ FIN DE SECCION DE CODIGO ========================
 end
