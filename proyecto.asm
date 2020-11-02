@@ -146,13 +146,13 @@ include macros.asm
 	shell               db  'SHELLSORT', '$'
 	quick               db  'QUICKSORT', '$'
 	speedLabel          db  'VELOCIDAD: ', '$', '$'
-	timeLabel           db  'TIEMPO: 00:0' ,'$', '$'
+	timeLabel           db  'TIEMPO: 00:00' , '$'
 
 	puntosFile          db  'puntos.rep', 00h
 	tiempoFile          db  'tiempos.rep', 00h
 	punteoActual        dw  0
 	nivelActual         db  49
-	ene                 db  'N', '$', '$'
+	ene                 db  'NIVEL', '$', '$'
 	
 	bandera             db  0
 
@@ -193,10 +193,7 @@ include macros.asm
 	detectado           db  0
 
 	level11             db  11b, 11b, 11b, 11b, 11b ,11b ,11b ,11b,
-11b, 11b, 11b, 11b, 11b ,11b ,11b ,11b,
-10b, 10b, 10b ,10b, 10b ,10b ,10b ,10b, '$'
-	level12             db  10b, 10b, 10b ,10b, 10b ,10b ,10b ,10b,
-01b, 01b, 01b, 01b, 01b, 01b, 01b, 01b,
+10b, 10b, 10b ,10b, 10b ,10b ,10b ,10b,
 01b, 01b, 01b, 01b, 01b, 01b, 01b, 01b, '$'
 
 .code ;segmento de código

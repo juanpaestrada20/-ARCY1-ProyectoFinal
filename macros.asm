@@ -1459,8 +1459,9 @@ graphChange macro lista, velocidad, name, valor
 	            jmp             SEGUIR
 
 	UNIDAD:     
+	            mov             timeLabel[11], '0'
 	            mov             bl, auxCadena[0]
-	            mov             timeLabel[11], bl
+	            mov             timeLabel[12], bl
 	            jmp             SEGUIR
 
 	SEGUIR:     
@@ -2018,38 +2019,101 @@ transferCadena macro fuente, destino
 endm
 
 Juego macro
-	      clean           auxCadena, SIZEOF auxCadena
-	      ModoVideoOn
-	      escribirCadena  2, 1, usuario
-	      mov             bl, nivelActual
-	      mov             ene[1], bl
-	      escribirCadena  15, 1, ene
-	      pushRecords
-	      mov             ax, punteoActual
-	      to_string       auxCadena
-	      popRecords
-	      escribirCadena  20, 1, auxCadena
-	      pintarCuadro
-	      mov             grafX, 19
-	      mov             grafY,40
-	      pintarCuadritos level11
-	      mov             grafX, 19
-	      mov             grafY, 64
-	      pintarCuadritos level12
-	      mov             posBarra, 125
-	      pintarBloque    posBarra, 180, 70, 7, blanco
-	      mov             ballX, 150
-	      mov             ballY, 110
-	      mov             dirX, 0
-	      mov             dirY, 1
-	      mov             dir, 7
-	      pintarBloque    ballX, ballY, 3, 3, blanco
-	      clearScreen
-	      LoopJuego
-	      getChar
-	      ModoVideoOff
+	        LOCAL           DECIMAS, UNIDAD, SEGUIR
+	        clean           auxCadena, SIZEOF auxCadena
+	        ModoVideoOn
+	        escribirCadena  1, 1, usuario
+	        mov             bl, nivelActual
+	        mov             ene[5], bl
+	        escribirCadena  10, 1, ene
+	        pushRecords
+	        mov             ax, punteoActual
+	        to_string       auxCadena
+	        popRecords
+	        escribirCadena  20, 1, auxCadena
+	        pintarCuadro
+	        obtenerInicial
+	        clean           auxCadena, SIZEOF auxCadena
+	        pushRecords
+	        xor             ax, ax
+	        mov             al, minFinal
+	        to_string       auxCadena
+	        popRecords
+	        mov             bl, auxCadena[0]
+	        mov             timeLabel[9], bl
+	        clean           auxCadena, SIZEOF auxCadena
+	        pushRecords
+	        mov             ah, 0
+	        mov             al, segFinal
+	        to_string       auxCadena
+	        popRecords
+	        mov             bl, auxCadena[1]
+	        cmp             bl, '$'
+	        jne             DECIMAS
+
+	DECIMAS:
+	        mov             timeLabel[12], bl
+	        mov             bl, auxCadena[0]
+	        mov             timeLabel[11], bl
+	        jmp             SEGUIR
+
+	UNIDAD: 
+	        mov             timeLabel[11], '0'
+	        mov             bl, auxCadena[0]
+	        mov             timeLabel[12], bl
+	        jmp             SEGUIR
+	SEGUIR: 
+	        escribirCadena  26, 1, timeLabel
+	        mov             grafX, 19
+	        mov             grafY,40
+	        pintarCuadritos level11
+	        mov             posBarra, 125
+	        pintarBloque    posBarra, 180, 70, 7, blanco
+	        mov             ballX, 150
+	        mov             ballY, 110
+	        mov             dirX, 0
+	        mov             dirY, 1
+	        mov             dir, 7
+	        pintarBloque    ballX, ballY, 3, 3, blanco
+	        LoopJuego
+	        getChar
+	        ModoVideoOff
 endm
 
+colocarTiempo macro
+	              LOCAL          DECIMAS, UNIDAD, SEGUIR
+	              calcularTiempo
+	              clean          auxCadena, SIZEOF auxCadena
+	              pushRecords
+	              xor            ax, ax
+	              mov            al, minFinal
+	              to_string      auxCadena
+	              popRecords
+	              mov            bl, auxCadena[0]
+	              mov            timeLabel[9], bl
+	              clean          auxCadena, SIZEOF auxCadena
+	              pushRecords
+	              mov            ah, 0
+	              mov            al, segFinal
+	              to_string      auxCadena
+	              popRecords
+	              mov            bl, auxCadena[1]
+	              cmp            bl, '$'
+	              jne            DECIMAS
+
+	DECIMAS:      
+	              mov            timeLabel[12], bl
+	              mov            bl, auxCadena[0]
+	              mov            timeLabel[11], bl
+	              jmp            SEGUIR
+
+	UNIDAD:       
+	              mov            timeLabel[11], '0'
+	              mov            bl, auxCadena[0]
+	              mov            timeLabel[12], bl
+				
+	SEGUIR:       
+endm
 pintarCuadritos macro array
 	                LOCAL        RECORRER, FIN, BLUE, ORANGE, GREEN, INCREMENT, MIDDLE, NEXTX, NEXTY, EMPTY
 	                xor          si, si
@@ -2111,18 +2175,17 @@ pintarCuadritos macro array
 endm
 
 LoopJuego macro
-	             LOCAL               RECORRER, DOWNLEFT, DOWNRIGHT, UPLEFT, UPRIGHT, DERECHA, IZQUIERDA, ARRIBA, ABAJO, DIRECCIONAR, FIN, DIRECCIONAR2, PELOTA, BARRA1, BARRA2
+	             LOCAL               RECORRER, DOWNLEFT, DOWNRIGHT, UPLEFT, UPRIGHT, DERECHA, IZQUIERDA, ARRIBA, ABAJO, DIRECCIONAR, FIN, DIRECCIONAR2, PELOTA, BARRA1, BARRA2, PAUSA
 	             xor                 bx, bx
 	             xor                 ax, ax
 
 	RECORRER:    
+	             colocarTiempo
+	             escribirCadena      26, 1, timeLabel
 	             pintarCuadro
 	             mov                 grafX, 19
 	             mov                 grafY,40
 	             pintarCuadritos     level11
-	             mov                 grafX, 19
-	             mov                 grafY, 64
-	             pintarCuadritos     level12
 	             pintarBloque        posBarra, 180, 70, 7, blanco
 	             pintarBloque        ballX, ballY, 3, 3, blanco
 	             xor                 ax, ax
@@ -2142,7 +2205,14 @@ LoopJuego macro
 	             je                  BARRA2
 	             cmp                 al, 64h
 	             je                  BARRA2
+
+	             cmp                 al, 20h
+	             je                  PAUSA
+				
 	             jmp                 PELOTA
+
+	PAUSA:       
+	             getChar
 	
 	BARRA1:      
 	             cmp                 posBarra, 11
