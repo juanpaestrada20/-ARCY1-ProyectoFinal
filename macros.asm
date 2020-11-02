@@ -594,8 +594,7 @@ login macro user, pass
 	            jmp           IniciarSesion
 
 	ACCESS:     
-	            print         aunNo
-	            getChar
+	            Juego
 	            jmp           Menu
 endm
 getNumbers macro punteos
@@ -1435,18 +1434,18 @@ graphChange macro lista, velocidad, name, valor
 	            escribirCadena  12, 1, speedLabel
 	            popRecords
 	            calcularTiempo
-	            mov             ah, 0
-	            mov             al, minFinal
 	            clean           auxCadena, SIZEOF auxCadena
 	            pushRecords
+	            xor             ax, ax
+	            mov             al, minFinal
 	            to_string       auxCadena
 	            popRecords
 	            mov             bl, auxCadena[0]
 	            mov             timeLabel[9], bl
-	            mov             ah, 0
-	            mov             al, segFinal
 	            clean           auxCadena, SIZEOF auxCadena
 	            pushRecords
+	            mov             ah, 0
+	            mov             al, segFinal
 	            to_string       auxCadena
 	            popRecords
 	            mov             bl, auxCadena[1]
@@ -1586,36 +1585,31 @@ speedCalculator macro velocidad
 endm
 
 calcularTiempo macro
-	               LOCAL       MINUTO, SEGUNDO,SALIR
+	               LOCAL       MINUTO, SEGUNDO,SALIR, AGREGAR
 	               pushRecords
 	               mov         ah, 2ch
 	               int         21h
-	               mov         minFinal, cl
 	               mov         segFinal, dh
 	               mov         dl, segInicial
-	               cmp         dl, cl
-	               jge         MINUTO
+	               cmp         dl, dh
+	               jg          MINUTO
 	               jmp         SEGUNDO
 
 	MINUTO:        
-	               xor         ax, ax
-	               xor         bx, bx
-	               mov         al,cl
-	               sub         minFinal, al
-	               add         minFinal, 1
-	               mov         bl, segInicial
-	               sub         bl, segFinal
-	               mov         segFinal, bl
-	               jmp         SALIR
+	               mov         bandera, 1
+	               add         segFinal, 60
 
 	SEGUNDO:       
-	               xor         ax, ax
 	               xor         bx, bx
-	               mov         al,cl
-	               sub         minFinal, al
 	               mov         bl, segInicial
 	               sub         segFinal, bl
+	               cmp         bandera, 1
+	               je          AGREGAR
 	               jmp         SALIR
+
+	AGREGAR:       
+	               add         minFinal, 1
+	               mov         bandera, 0
 	              
 	SALIR:         
 	               popRecords
@@ -1625,8 +1619,9 @@ obtenerInicial macro
 	               pushRecords
 	               mov         ah, 2ch
 	               int         21h
-	               mov         minInicial, cl
+	               mov         minInicial, 0
 	               mov         segInicial, dh
+	               mov         bandera, 0
 	               popRecords
 endm
 
@@ -2007,4 +2002,355 @@ sonido macro hz,delaym
 	       pop   cx
 	       pop   ax
 
+endm
+transferCadena macro fuente, destino
+	               LOCAL RECORRER, FIN
+	               xor   si,si
+	RECORRER:      
+	               mov   bl, fuente[si]
+	               cmp   bl, '$'
+	               je    FIN
+	               mov   destino[si], bl
+	               inc   si
+	               jmp   RECORRER
+
+	FIN:           
+endm
+
+Juego macro
+	      clean           auxCadena, SIZEOF auxCadena
+	      ModoVideoOn
+	      escribirCadena  2, 1, usuario
+	      mov             bl, nivelActual
+	      mov             ene[1], bl
+	      escribirCadena  15, 1, ene
+	      pushRecords
+	      mov             ax, punteoActual
+	      to_string       auxCadena
+	      popRecords
+	      escribirCadena  20, 1, auxCadena
+	      pintarCuadro
+	      mov             grafX, 19
+	      mov             grafY,40
+	      pintarCuadritos level11
+	      mov             grafX, 19
+	      mov             grafY, 64
+	      pintarCuadritos level12
+	      mov             posBarra, 125
+	      pintarBloque    posBarra, 180, 70, 7, blanco
+	      mov             ballX, 150
+	      mov             ballY, 110
+	      mov             dirX, 0
+	      mov             dirY, 1
+	      mov             dir, 7
+	      pintarBloque    ballX, ballY, 3, 3, blanco
+	      clearScreen
+	      LoopJuego
+	      getChar
+	      ModoVideoOff
+endm
+
+pintarCuadritos macro array
+	                LOCAL        RECORRER, FIN, BLUE, ORANGE, GREEN, INCREMENT, MIDDLE, NEXTX, NEXTY, EMPTY
+	                xor          si, si
+	                xor          di, di
+	                xor          cx, cx
+
+	RECORRER:       
+	                mov          bl, array[si]
+	                cmp          bl, '$'
+	                je           FIN
+	                cmp          bl, 11b
+	                je           BLUE
+	                cmp          bl, 10b
+	                je           ORANGE
+	                cmp          bl, 01b
+	                je           GREEN
+	                jmp          EMPTY
+
+	EMPTY:          
+	                PintarBloque grafX, grafY, 34, 7, negro
+	                jmp          INCREMENT
+
+	BLUE:           
+	                PintarBloque grafX, grafY, 34, 7, azul
+	                jmp          INCREMENT
+
+	ORANGE:         
+	                PintarBloque grafX, grafY, 34, 7, naranja
+	                jmp          INCREMENT
+
+	GREEN:          
+	                PintarBloque grafX, grafY, 34, 7, verde
+	                jmp          INCREMENT
+
+	INCREMENT:      
+	                inc          si
+	                inc          cx
+	                cmp          cx, 4
+	                je           MIDDLE
+	                cmp          cx, 8
+	                je           NEXTY
+	                jmp          NEXTX
+
+	MIDDLE:         
+	                add          grafX, 2
+	                jmp          NEXTX
+	
+	NEXTX:          
+	                add          grafX, 35
+	                jmp          RECORRER
+
+	NEXTY:          
+	                xor          cx, cx
+	                mov          grafX, 19
+	                add          grafY, 8
+	                jmp          RECORRER
+
+	FIN:            
+endm
+
+LoopJuego macro
+	             LOCAL               RECORRER, DOWNLEFT, DOWNRIGHT, UPLEFT, UPRIGHT, DERECHA, IZQUIERDA, ARRIBA, ABAJO, DIRECCIONAR, FIN, DIRECCIONAR2, PELOTA, BARRA1, BARRA2
+	             xor                 bx, bx
+	             xor                 ax, ax
+
+	RECORRER:    
+	             pintarCuadro
+	             mov                 grafX, 19
+	             mov                 grafY,40
+	             pintarCuadritos     level11
+	             mov                 grafX, 19
+	             mov                 grafY, 64
+	             pintarCuadritos     level12
+	             pintarBloque        posBarra, 180, 70, 7, blanco
+	             pintarBloque        ballX, ballY, 3, 3, blanco
+	             xor                 ax, ax
+
+	             mov                 ah, 01h
+	             int                 16h
+	             jz                  PELOTA
+
+	             mov                 ah, 00h
+	             int                 16h
+				 
+	             cmp                 al, 61h
+	             je                  BARRA1
+	             cmp                 al, 41h
+	             je                  BARRA1
+	             cmp                 al, 44h
+	             je                  BARRA2
+	             cmp                 al, 64h
+	             je                  BARRA2
+	             jmp                 PELOTA
+	
+	BARRA1:      
+	             cmp                 posBarra, 11
+	             jle                 PELOTA
+	             sub                 posBarra,5
+	             mov                 cx, posBarra
+	             add                 cx, 75
+	             pintarBloque        cx , 180, 5, 7, negro
+	             xor                 ax, ax
+	             jmp                 PELOTA
+
+	BARRA2:      
+	             cmp                 posBarra, 240
+	             jge                 PELOTA
+	             add                 posBarra, 5
+	             mov                 cx, posBarra
+	             sub                 cx, 5
+	             pintarBloque        cx , 180, 5, 7, negro
+	             xor                 ax, ax
+	             jmp                 PELOTA
+
+	PELOTA:      
+	             mov                 bx, dir
+	             cmp                 bx, 9
+	             je                  DOWNRIGHT
+	             cmp                 bx, 7
+	             je                  DOWNLEFT
+	             cmp                 bx, 3
+	             je                  UPLEFT
+	             cmp                 bx, 5
+	             je                  UPRIGHT
+
+	             jmp                 RECORRER
+
+	DOWNLEFT:    
+	             pintarBloque        ballX, ballY, 3, 3, negro
+	             sub                 ballX, 1
+	             add                 ballY, 1
+	             pintarBloque        ballX, ballY, 3, 3, blanco
+	             jmp                 DIRECCIONAR
+
+	DOWNRIGHT:   
+	             pintarBloque        ballX, ballY, 3, 3, negro
+	             add                 ballX, 1
+	             add                 ballY, 1
+	             pintarBloque        ballX, ballY, 3, 3, blanco
+	             jmp                 DIRECCIONAR
+
+	UPLEFT:      
+	             pintarBloque        ballX, ballY, 3, 3, negro
+	             sub                 ballX, 1
+	             sub                 ballY, 1
+	             pintarBloque        ballX, ballY, 3, 3, blanco
+	             jmp                 DIRECCIONAR
+
+	UPRIGHT:     
+	             pintarBloque        ballX, ballY, 3, 3, negro
+	             add                 ballX, 1
+	             sub                 ballY, 1
+	             pintarBloque        ballX, ballY, 3, 3, blanco
+	             jmp                 DIRECCIONAR
+
+	DIRECCIONAR: 
+	             verificarDireccionX dirX
+	             mov                 dir, 0
+	             cmp                 dirX, 1
+	             je                  DERECHA
+	             jmp                 IZQUIERDA
+	
+	DERECHA:     
+	             mov                 dir, 4
+	             jmp                 DIRECCIONAR2
+	           
+
+	IZQUIERDA:   
+	             mov                 dir, 2
+	             jmp                 DIRECCIONAR2
+	            
+	DIRECCIONAR2:
+	             verificarDireccionY dirY
+	             cmp                 dirY, 0
+	             je                  ARRIBA
+	             jmp                 ABAJO
+
+	ARRIBA:      
+	             add                 dir, 1
+	             jmp                 RECORRER
+	            
+	ABAJO:       
+	             add                 dir, 5
+	             jmp                 RECORRER
+	            
+
+	FIN:         
+
+endm
+
+verificarDireccionX macro direccion
+	                    LOCAL    DERECHA, CAMBIAR, CAMBIAR2, IZQUIERDA, FIN
+	                    cmp      direccion, 0
+	                    je       IZQUIERDA
+	                    jmp      DERECHA
+
+	IZQUIERDA:          
+	                    mov      cx, ballX
+	                    sub      cx, 1
+	                    getPixel cx, ballY
+	                    cmp      detectado, negro
+	                    jne      CAMBIAR
+	                    cmp      ballX, 10
+	                    jg       FIN
+	
+	CAMBIAR:            
+	                    cmp      detectado, blanco
+	                    je       fin
+	                    mov      direccion, 1
+	                    mov      dirX, 1
+	                    jmp      FIN
+
+	DERECHA:            
+	                    mov      cx, ballX
+	                    add      cx, 3
+	                    getPixel cx, ballY
+	                    cmp      detectado, negro
+	                    jne      CAMBIAR2
+	                    cmp      ballX, 307
+	                    jl       FIN
+
+	CAMBIAR2:           
+	                    cmp      detectado, blanco
+	                    je       fin
+	                    mov      direccion, 0
+	                    mov      dirX, 0
+	                    jmp      FIN
+	
+	FIN:                
+endm
+verificarDireccionY macro direccion
+	                    LOCAL    ARRIBA, CAMBIAR, ABAJO, CAMBIAR2, FIN
+	                    cmp      direccion, 1
+	                    je       ABAJO
+	                    jmp      ARRIBA
+
+	ABAJO:              
+	                    mov      dx, ballY
+	                    add      dx, 1
+	                    getPixel ballX, dx
+	                    cmp      detectado, negro
+	                    jne      CAMBIAR
+	                    cmp      ballY, 190
+	                    jl       FIN
+
+	CAMBIAR:            
+	                    mov      direccion, 0
+	                    mov      dirY, 0
+	                    jmp      FIN
+
+	ARRIBA:             
+	                    mov      dx, ballY
+	                    sub      dx, 3
+	                    getPixel ballX, dx
+	                    cmp      detectado, negro
+	                    jne      CAMBIAR2
+	                    cmp      ballY, 22
+	                    jg       FIN
+	
+	CAMBIAR2:           
+	                    cmp      detectado, blanco
+	                    je       fin
+	                    mov      direccion, 1
+	                    mov      dirY, 1
+	                    jmp      FIN
+	
+	FIN:                
+endm
+
+getPixel macro x, y
+	         pushRecords
+	         mov         ah, 0dh
+	         mov         bh, 00h
+	         mov         cx, x
+	         mov         dx, y
+	         int         10h
+	         mov         detectado, al
+	         popRecords
+endm
+
+printColor macro
+	           LOCAL       GREEN, BLACK, WHITE, ORANGE, BLUE, fin
+	           cmp         al, negro
+	           je          BLACK
+	           cmp         al, verde
+	           je          GREEN
+	           cmp         al, naranja
+	           je          orange
+	           pushRecords
+	BLACK:     
+	           print       ene
+	           getChar
+	           jmp         fin
+	ORANGE:    
+	           print       segundo
+	           getChar
+	           jmp         fin
+	GREEN:     
+	           print       usuarioT
+	           getChar
+	           jmp         fin
+	           popRecords
+	fin:       
 endm

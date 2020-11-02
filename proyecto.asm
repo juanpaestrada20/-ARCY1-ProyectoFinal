@@ -150,7 +150,12 @@ include macros.asm
 
 	puntosFile          db  'puntos.rep', 00h
 	tiempoFile          db  'tiempos.rep', 00h
+	punteoActual        dw  0
+	nivelActual         db  49
+	ene                 db  'N', '$', '$'
 	
+	bandera             db  0
+
 	minInicial          db  0
 	minFinal            db  0
 	segInicial          db  0
@@ -163,6 +168,7 @@ include macros.asm
 	verde               equ 30h
 	morado              equ 05h
 	negro               equ 00h
+	naranja             equ 2ah
 
 	color               db  0fh
 
@@ -174,7 +180,25 @@ include macros.asm
 	valJ                db  'Valor J:','$'
 	valK                db  'Valor K:','$'
 	comp                db  'Comparacion:','$'
-	
+
+	ballX               dw  0
+	ballY               dw  0
+	; 0, para abajo ; 1 para arriba
+	dir                 dw  0
+	dirX                dw  0
+	dirY                dw  0
+	grafX               dw  0
+	grafY               dw  0
+	posBarra            dw  0
+	detectado           db  0
+
+	level11             db  11b, 11b, 11b, 11b, 11b ,11b ,11b ,11b,
+11b, 11b, 11b, 11b, 11b ,11b ,11b ,11b,
+10b, 10b, 10b ,10b, 10b ,10b ,10b ,10b, '$'
+	level12             db  10b, 10b, 10b ,10b, 10b ,10b ,10b ,10b,
+01b, 01b, 01b, 01b, 01b, 01b, 01b, 01b,
+01b, 01b, 01b, 01b, 01b, 01b, 01b, 01b, '$'
+
 .code ;segmento de código
 ;================== SECCION DE CODIGO ===========================
 	main proc 
