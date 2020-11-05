@@ -2042,8 +2042,8 @@ endm
 
 Juego macro
 	        LOCAL           DECIMAS, UNIDAD, SEGUIR
-	        clean           auxCadena, SIZEOF auxCadena
 	        ModoVideoOn
+	        clean           auxCadena, SIZEOF auxCadena
 	        escribirCadena  1, 1, usuario
 	        mov             bl, nivelActual
 	        mov             ene[5], bl
@@ -2100,6 +2100,9 @@ Juego macro
 	        mov             juegoPerdido, 0
 	        mov             punteoActual, 0
 	        mov             tiempoActual, 0
+	        mov             bloquesQuebrados, 0
+	        mov             minFinal, 0
+	        mov             segFinal, 0
 	        pushRecords
 	        mov             ax, punteoActual
 	        to_string       auxCadena
@@ -2218,7 +2221,8 @@ LoopJuego macro
 	             colocarTiempo
 	             escribirCadena      26, 1, timeLabel
 	             pintarCuadro
-	             
+	             cmp                 siguienteNivel, 1
+	             je                  NIVELSIG
 	             pintarBloque        posBarra, 180, 70, 7, blanco
 	             pintarBloque        ballX, ballY, 3, 3, blanco
 	             Delay               velocity
@@ -2346,14 +2350,54 @@ LoopJuego macro
 	             jmp                 RECORRER
 	            
 	NIVELSIG:    
-	             mov                 siguienteNivel, 0
-	             sub                 velocity, 50
+	             cmp                 nivelActual, 52
+	             je                  fin
+	             aumentarNivel
+	             jmp                 RECORRER
 	FIN:         
 	             cmp                 siguienteNivel, 1
 	             je                  NIVELSIG
 	             guardarPuntaje      usuario, nivelActual, punteoActual
 
 
+endm
+
+aumentarNivel macro
+	              LOCAL           FIN, TERCERO, SIGUIENTE
+	              clearScreen
+	              mov             siguienteNivel, 0
+	              sub             velocity, 50
+	              add             nivelActual, 1
+	              mov             bl, nivelActual
+	              mov             ene[5], bl
+	              escribirCadena  10, 1, ene
+	              clean           levelJugar, SIZEOF levelJugar
+	              transferArray2  level11, levelJugar
+	              saveOnArray     level11, levelJugar
+	              cmp             nivelActual, 51
+	              je              TERCERO
+	              jmp             SIGUIENTE
+	TERCERO:      
+	              saveOnArray     level11, levelJugar
+	SIGUIENTE:    
+	              clean           auxCadena, SIZEOF auxCadena
+	              escribirCadena  1, 1, usuario
+	              pushRecords
+	              mov             ax, punteoActual
+	              to_string       auxCadena
+	              popRecords
+	              escribirCadena  20, 1, auxCadena
+	              mov             grafX, 19
+	              mov             grafY,40
+	              pintarCuadritos levelJugar
+	              mov             ballX, 150
+	              mov             ballY, 110
+	              mov             dirX, 0
+	              mov             dirY, 1
+	              mov             dir, 7
+	              mov             bloquesQuebrados,0
+	              pintarCuadro
+	              getChar
 endm
 guardarPuntaje macro user, nivel, punteo
 	               saveOnArray usuario, listaPunteos
@@ -2512,7 +2556,7 @@ printColor macro
 endm
 
 breakBlock macro posX, posY
-	           LOCAL           FIN, LINE, COLUMN, DESTROY
+	           LOCAL           FIN, LINE, COLUMN, DESTROY, L1COMP, L2COMP, L3COMP
 	           pushRecords
 	           cmp             detectado, blanco
 	           je              FIN
@@ -2529,6 +2573,28 @@ breakBlock macro posX, posY
 	           jle             COLUMN
 	           inc             si
 	           cmp             posY, 56
+	           jle             COLUMN
+	           cmp             nivelActual, 49
+	           je              COLUMN
+	           inc             si
+	           cmp             posY, 64
+	           jle             COLUMN
+	           inc             si
+	           cmp             posY, 72
+	           jle             COLUMN
+	           inc             si
+	           cmp             posY, 80
+	           jle             COLUMN
+	           cmp             nivelActual, 50
+	           je              COLUMN
+	           inc             si
+	           cmp             posY, 88
+	           jle             COLUMN
+	           inc             si
+	           cmp             posY, 96
+	           jle             COLUMN
+	           inc             si
+	           cmp             posY, 104
 	           jle             COLUMN
 	           jg              FIN
 
@@ -2560,11 +2626,34 @@ breakBlock macro posX, posY
 	           mov             grafY,40
 	           pintarCuadritos levelJugar
 	           add             punteoActual, 1
+	           add             bloquesQuebrados, 1
 	           pushRecords
 	           mov             ax, punteoActual
 	           to_string       auxCadena
 	           popRecords
 	           escribirCadena  20, 1, auxCadena
+	           cmp             nivelActual, 49
+	           je              L1COMP
+	           cmp             nivelActual, 50
+	           je              L2COMP
+	           jmp             L3COMP
+
+	L1COMP:    
+	           cmp             bloquesQuebrados, 12
+	           jl              fin
+	           mov             siguienteNivel, 1
+	           jmp             fin
+	L2COMP:    
+	           cmp             bloquesQuebrados, 24
+	           jl              fin
+	           mov             siguienteNivel, 1
+	           jmp             fin
+	L3COMP:    
+	           cmp             bloquesQuebrados, 36
+	           jl              fin
+	           mov             siguienteNivel, 1
+	           jmp             fin
+
 
 	FIN:       
 	           popRecords

@@ -195,6 +195,7 @@ include macros.asm
 	velocity            dw  200
 	siguienteNivel      db  0
 	tiempoActual        dw  0
+	bloquesQuebrados    dw  0
 
 	level11             db  11b, 11b, 11b, 11b,
 10b, 10b, 10b ,10b,
