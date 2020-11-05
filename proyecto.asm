@@ -155,6 +155,7 @@ include macros.asm
 	ene                 db  'NIVEL', '$', '$'
 	
 	bandera             db  0
+	juegoPerdido        dw  0
 
 	minInicial          db  0
 	minFinal            db  0
@@ -191,10 +192,14 @@ include macros.asm
 	grafY               dw  0
 	posBarra            dw  0
 	detectado           db  0
+	velocity            dw  200
+	siguienteNivel      db  0
+	tiempoActual        dw  0
 
-	level11             db  11b, 11b, 11b, 11b, 11b ,11b ,11b ,11b,
-10b, 10b, 10b ,10b, 10b ,10b ,10b ,10b,
-01b, 01b, 01b, 01b, 01b, 01b, 01b, 01b, '$'
+	level11             db  11b, 11b, 11b, 11b,
+10b, 10b, 10b ,10b,
+01b, 01b, 01b, 01b, '$'
+	levelJugar          db  100 dup('$')
 
 .code ;segmento de código
 ;================== SECCION DE CODIGO ===========================

@@ -732,6 +732,27 @@ transferArray macro origin, destiny
 
 
 endm
+transferArray2 macro origin, destiny
+	               LOCAL RECORRER, INCREMENT, END
+	               xor   si, si
+	               xor   ax, ax
+
+	RECORRER:      
+	               mov   al, origin[si]
+	               cmp   al, '$'
+	               je    END
+	               mov   destiny[si], al
+	               jmp   INCREMENT
+
+	INCREMENT:     
+	               inc   si
+	               xor   ax, ax
+	               jmp   RECORRER
+
+	END:           
+
+
+endm
 printArray macro array
 	           LOCAL     GETNUMBER, INCREMENT, END
 	           xor       si, si
@@ -1600,6 +1621,7 @@ calcularTiempo macro
 	               mov         bandera, 1
 	               add         segFinal, 60
 
+
 	SEGUNDO:       
 	               xor         bx, bx
 	               mov         bl, segInicial
@@ -2064,9 +2086,10 @@ Juego macro
 	        jmp             SEGUIR
 	SEGUIR: 
 	        escribirCadena  26, 1, timeLabel
+	        transferArray2  level11, levelJugar
 	        mov             grafX, 19
 	        mov             grafY,40
-	        pintarCuadritos level11
+	        pintarCuadritos levelJugar
 	        mov             posBarra, 125
 	        pintarBloque    posBarra, 180, 70, 7, blanco
 	        mov             ballX, 150
@@ -2074,10 +2097,20 @@ Juego macro
 	        mov             dirX, 0
 	        mov             dirY, 1
 	        mov             dir, 7
+	        mov             juegoPerdido, 0
+	        mov             punteoActual, 0
+	        mov             tiempoActual, 0
+	        pushRecords
+	        mov             ax, punteoActual
+	        to_string       auxCadena
+	        popRecords
+	        escribirCadena  20, 1, auxCadena
 	        pintarBloque    ballX, ballY, 3, 3, blanco
 	        LoopJuego
 	        getChar
 	        ModoVideoOff
+	        print           listaPunteos
+	        getChar
 endm
 
 colocarTiempo macro
@@ -2089,6 +2122,7 @@ colocarTiempo macro
 	              mov            al, minFinal
 	              to_string      auxCadena
 	              popRecords
+	              xor            bx, bx
 	              mov            bl, auxCadena[0]
 	              mov            timeLabel[9], bl
 	              clean          auxCadena, SIZEOF auxCadena
@@ -2111,6 +2145,7 @@ colocarTiempo macro
 	              mov            timeLabel[11], '0'
 	              mov            bl, auxCadena[0]
 	              mov            timeLabel[12], bl
+	              mov            timeLabel[13], '$'
 				
 	SEGUIR:       
 endm
@@ -2133,27 +2168,27 @@ pintarCuadritos macro array
 	                jmp          EMPTY
 
 	EMPTY:          
-	                PintarBloque grafX, grafY, 34, 7, negro
+	                PintarBloque grafX, grafY, 69, 7, negro
 	                jmp          INCREMENT
 
 	BLUE:           
-	                PintarBloque grafX, grafY, 34, 7, azul
+	                PintarBloque grafX, grafY, 69, 7, azul
 	                jmp          INCREMENT
 
 	ORANGE:         
-	                PintarBloque grafX, grafY, 34, 7, naranja
+	                PintarBloque grafX, grafY, 69, 7, naranja
 	                jmp          INCREMENT
 
 	GREEN:          
-	                PintarBloque grafX, grafY, 34, 7, verde
+	                PintarBloque grafX, grafY, 69, 7, verde
 	                jmp          INCREMENT
 
 	INCREMENT:      
 	                inc          si
 	                inc          cx
-	                cmp          cx, 4
+	                cmp          cx, 2
 	                je           MIDDLE
-	                cmp          cx, 8
+	                cmp          cx, 4
 	                je           NEXTY
 	                jmp          NEXTX
 
@@ -2162,7 +2197,7 @@ pintarCuadritos macro array
 	                jmp          NEXTX
 	
 	NEXTX:          
-	                add          grafX, 35
+	                add          grafX, 70
 	                jmp          RECORRER
 
 	NEXTY:          
@@ -2175,7 +2210,7 @@ pintarCuadritos macro array
 endm
 
 LoopJuego macro
-	             LOCAL               RECORRER, DOWNLEFT, DOWNRIGHT, UPLEFT, UPRIGHT, DERECHA, IZQUIERDA, ARRIBA, ABAJO, DIRECCIONAR, FIN, DIRECCIONAR2, PELOTA, BARRA1, BARRA2, PAUSA
+	             LOCAL               RECORRER, DOWNLEFT, DOWNRIGHT, UPLEFT, UPRIGHT, DERECHA, IZQUIERDA, ARRIBA, ABAJO, DIRECCIONAR, FIN, DIRECCIONAR2, PELOTA, BARRA1, BARRA2, PAUSA, NIVELSIG
 	             xor                 bx, bx
 	             xor                 ax, ax
 
@@ -2183,11 +2218,10 @@ LoopJuego macro
 	             colocarTiempo
 	             escribirCadena      26, 1, timeLabel
 	             pintarCuadro
-	             mov                 grafX, 19
-	             mov                 grafY,40
-	             pintarCuadritos     level11
+	             
 	             pintarBloque        posBarra, 180, 70, 7, blanco
 	             pintarBloque        ballX, ballY, 3, 3, blanco
+	             Delay               velocity
 	             xor                 ax, ax
 
 	             mov                 ah, 01h
@@ -2206,13 +2240,17 @@ LoopJuego macro
 	             cmp                 al, 64h
 	             je                  BARRA2
 
-	             cmp                 al, 20h
+	             cmp                 al, 27
 	             je                  PAUSA
 				
 	             jmp                 PELOTA
 
 	PAUSA:       
 	             getChar
+	             cmp                 al, 20h
+	             je                  FIN
+	             cmp                 al, 27
+	             jne                 PAUSA
 	
 	BARRA1:      
 	             cmp                 posBarra, 11
@@ -2293,6 +2331,8 @@ LoopJuego macro
 	            
 	DIRECCIONAR2:
 	             verificarDireccionY dirY
+	             cmp                 juegoPerdido, 1
+	             je                  FIN
 	             cmp                 dirY, 0
 	             je                  ARRIBA
 	             jmp                 ABAJO
@@ -2305,86 +2345,132 @@ LoopJuego macro
 	             add                 dir, 5
 	             jmp                 RECORRER
 	            
-
+	NIVELSIG:    
+	             mov                 siguienteNivel, 0
+	             sub                 velocity, 50
 	FIN:         
+	             cmp                 siguienteNivel, 1
+	             je                  NIVELSIG
+	             guardarPuntaje      usuario, nivelActual, punteoActual
+
+
+endm
+guardarPuntaje macro user, nivel, punteo
+	               saveOnArray usuario, listaPunteos
+	               mov         listaPunteos[di], ','
+	               clean       auxCadena, SIZEOF auxCadena
+	               mov         al, nivel
+	               mov         auxCadena[0], al
+	               saveOnArray auxCadena, listaPunteos
+	               mov         listaPunteos[di], ','
+	               pushRecords
+	               clean       auxCadena, SIZEOF auxCadena
+	               mov         ax, punteo
+	               to_string   auxCadena
+	               popRecords
+	               saveOnArray auxCadena, listaPunteos
+	               mov         listaPunteos[di], ','
+	               pushRecords
+	               clean       auxCadena, SIZEOF auxCadena
+	               xor         ax, ax
+	               xor         bx, bx
+	               mov         al, minFinal
+	               mov         bx, 60
+	               mul         bx
+	               mov         bh, 0
+	               mov         bl, segFinal
+	               add         ax, bx
+	               to_string   auxCadena
+	               popRecords
+	               saveOnArray auxCadena, listaPunteos
+	               mov         listaPunteos[di], '%'
+	               
 
 endm
 
 verificarDireccionX macro direccion
-	                    LOCAL    DERECHA, CAMBIAR, CAMBIAR2, IZQUIERDA, FIN
-	                    cmp      direccion, 0
-	                    je       IZQUIERDA
-	                    jmp      DERECHA
+	                    LOCAL      DERECHA, CAMBIAR, CAMBIAR2, IZQUIERDA, FIN
+	                    cmp        direccion, 0
+	                    je         IZQUIERDA
+	                    jmp        DERECHA
 
 	IZQUIERDA:          
-	                    mov      cx, ballX
-	                    sub      cx, 1
-	                    getPixel cx, ballY
-	                    cmp      detectado, negro
-	                    jne      CAMBIAR
-	                    cmp      ballX, 10
-	                    jg       FIN
+	                    mov        cx, ballX
+	                    sub        cx, 1
+	                    getPixel   cx, ballY
+	                    cmp        detectado, negro
+	                    jne        CAMBIAR
+	                    cmp        ballX, 10
+	                    jg         FIN
 	
 	CAMBIAR:            
-	                    cmp      detectado, blanco
-	                    je       fin
-	                    mov      direccion, 1
-	                    mov      dirX, 1
-	                    jmp      FIN
+	                    cmp        detectado, blanco
+	                    je         fin
+	                    breakBlock cx, ballY
+	                    mov        direccion, 1
+	                    mov        dirX, 1
+	                    jmp        FIN
 
 	DERECHA:            
-	                    mov      cx, ballX
-	                    add      cx, 3
-	                    getPixel cx, ballY
-	                    cmp      detectado, negro
-	                    jne      CAMBIAR2
-	                    cmp      ballX, 307
-	                    jl       FIN
+	                    mov        cx, ballX
+	                    add        cx, 3
+	                    getPixel   cx, ballY
+	                    cmp        detectado, negro
+	                    jne        CAMBIAR2
+	                    cmp        ballX, 307
+	                    jl         FIN
 
 	CAMBIAR2:           
-	                    cmp      detectado, blanco
-	                    je       fin
-	                    mov      direccion, 0
-	                    mov      dirX, 0
-	                    jmp      FIN
+	                    cmp        detectado, blanco
+	                    je         fin
+	                    breakBlock cx, ballY
+	                    mov        direccion, 0
+	                    mov        dirX, 0
+	                    jmp        FIN
 	
 	FIN:                
 endm
 verificarDireccionY macro direccion
-	                    LOCAL    ARRIBA, CAMBIAR, ABAJO, CAMBIAR2, FIN
-	                    cmp      direccion, 1
-	                    je       ABAJO
-	                    jmp      ARRIBA
+	                    LOCAL      ARRIBA, CAMBIAR, ABAJO, CAMBIAR2, FIN, PERDIO
+	                    cmp        direccion, 1
+	                    je         ABAJO
+	                    jmp        ARRIBA
 
 	ABAJO:              
-	                    mov      dx, ballY
-	                    add      dx, 1
-	                    getPixel ballX, dx
-	                    cmp      detectado, negro
-	                    jne      CAMBIAR
-	                    cmp      ballY, 190
-	                    jl       FIN
+	                    mov        dx, ballY
+	                    add        dx, 1
+	                    getPixel   ballX, dx
+	                    cmp        detectado, negro
+	                    jne        CAMBIAR
+	                    cmp        ballY, 180
+	                    jl         FIN
+	                    jge        PERDIO
 
 	CAMBIAR:            
-	                    mov      direccion, 0
-	                    mov      dirY, 0
-	                    jmp      FIN
+	                    breakBlock ballX, dx
+	                    mov        direccion, 0
+	                    mov        dirY, 0
+	                    jmp        FIN
 
 	ARRIBA:             
-	                    mov      dx, ballY
-	                    sub      dx, 3
-	                    getPixel ballX, dx
-	                    cmp      detectado, negro
-	                    jne      CAMBIAR2
-	                    cmp      ballY, 22
-	                    jg       FIN
+	                    mov        dx, ballY
+	                    sub        dx, 3
+	                    getPixel   ballX, dx
+	                    cmp        detectado, negro
+	                    jne        CAMBIAR2
+	                    cmp        ballY, 22
+	                    jg         FIN
 	
 	CAMBIAR2:           
-	                    cmp      detectado, blanco
-	                    je       fin
-	                    mov      direccion, 1
-	                    mov      dirY, 1
-	                    jmp      FIN
+	                    cmp        detectado, blanco
+	                    je         fin
+	                    breakBlock ballX, dx
+	                    mov        direccion, 1
+	                    mov        dirY, 1
+	                    jmp        FIN
+
+	PERDIO:             
+	                    mov        juegoPerdido, 1
 	
 	FIN:                
 endm
@@ -2423,4 +2509,63 @@ printColor macro
 	           jmp         fin
 	           popRecords
 	fin:       
+endm
+
+breakBlock macro posX, posY
+	           LOCAL           FIN, LINE, COLUMN, DESTROY
+	           pushRecords
+	           cmp             detectado, blanco
+	           je              FIN
+	           xor             si, si
+	           xor             di, di
+
+	LINE:      
+	           cmp             posY, 32
+	           jle             FIN
+	           cmp             posY, 40
+	           jle             COLUMN
+	           inc             si
+	           cmp             posY, 48
+	           jle             COLUMN
+	           inc             si
+	           cmp             posY, 56
+	           jle             COLUMN
+	           jg              FIN
+
+	COLUMN:    
+	           cmp             posX, 18
+	           jle             FIN
+	           cmp             posX, 88
+	           jle             DESTROY
+	           inc             di
+	           cmp             posX, 158
+	           jle             DESTROY
+	           inc             di
+	           cmp             posX, 230
+	           jle             DESTROY
+	           inc             di
+	           cmp             posX, 300
+	           jle             DESTROY
+	           jg              FIN
+
+	DESTROY:   
+	           mov             ax, si
+	           mov             bx, 4
+	           mul             bx
+	           add             ax, di
+	           
+	           mov             si, ax
+	           mov             levelJugar[si], 00b
+	           mov             grafX, 19
+	           mov             grafY,40
+	           pintarCuadritos levelJugar
+	           add             punteoActual, 1
+	           pushRecords
+	           mov             ax, punteoActual
+	           to_string       auxCadena
+	           popRecords
+	           escribirCadena  20, 1, auxCadena
+
+	FIN:       
+	           popRecords
 endm
