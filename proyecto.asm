@@ -197,6 +197,8 @@ include macros.asm
 	tiempoActual        dw  0
 	bloquesQuebrados    dw  0
 
+	tiempoJuego         db  0
+
 	level11             db  11b, 11b, 11b, 11b,
 10b, 10b, 10b ,10b,
 01b, 01b, 01b, 01b, '$'

@@ -504,8 +504,6 @@ addNewUser macro user, pass
 	           mov         bl, '%'
 	           mov         listaUsuarios[di], bl
 	           popRecords
-
-	           print       listaUsuarios
 endm
 login macro user, pass
 	            LOCAL         SEARCH, CONTRA, ADMIN, ADMINCONTRA,NOUSER, COMPARE, WRONGPASS, ACCESS, ORDER
@@ -2086,6 +2084,7 @@ Juego macro
 	        jmp             SEGUIR
 	SEGUIR: 
 	        escribirCadena  26, 1, timeLabel
+	        clean           levelJugar, SIZEOF levelJugar
 	        transferArray2  level11, levelJugar
 	        mov             grafX, 19
 	        mov             grafY,40
@@ -2112,8 +2111,6 @@ Juego macro
 	        LoopJuego
 	        getChar
 	        ModoVideoOff
-	        print           listaPunteos
-	        getChar
 endm
 
 colocarTiempo macro
@@ -2213,7 +2210,7 @@ pintarCuadritos macro array
 endm
 
 LoopJuego macro
-	             LOCAL               RECORRER, DOWNLEFT, DOWNRIGHT, UPLEFT, UPRIGHT, DERECHA, IZQUIERDA, ARRIBA, ABAJO, DIRECCIONAR, FIN, DIRECCIONAR2, PELOTA, BARRA1, BARRA2, PAUSA, NIVELSIG
+	             LOCAL               RECORRER, DOWNLEFT, DOWNRIGHT, UPLEFT, UPRIGHT, DERECHA, IZQUIERDA, ARRIBA, ABAJO, DIRECCIONAR, FIN, DIRECCIONAR2, PELOTA, BARRA1, BARRA2, PAUSA, NIVELSIG, END
 	             xor                 bx, bx
 	             xor                 ax, ax
 
@@ -2350,15 +2347,16 @@ LoopJuego macro
 	             jmp                 RECORRER
 	            
 	NIVELSIG:    
-	             cmp                 nivelActual, 52
-	             je                  fin
 	             aumentarNivel
+	             cmp                 nivelActual, 52
+	             je                  END
 	             jmp                 RECORRER
 	FIN:         
 	             cmp                 siguienteNivel, 1
 	             je                  NIVELSIG
-	             guardarPuntaje      usuario, nivelActual, punteoActual
 
+	END:         
+	             guardarPuntaje      usuario, nivelActual, punteoActual
 
 endm
 
@@ -2400,6 +2398,7 @@ aumentarNivel macro
 	              getChar
 endm
 guardarPuntaje macro user, nivel, punteo
+	               LOCAL       FIX, END
 	               saveOnArray usuario, listaPunteos
 	               mov         listaPunteos[di], ','
 	               clean       auxCadena, SIZEOF auxCadena
@@ -2424,6 +2423,12 @@ guardarPuntaje macro user, nivel, punteo
 	               mov         bh, 0
 	               mov         bl, segFinal
 	               add         ax, bx
+	               cmp         ax, 210
+	               jg          FIX
+	               jmp         END
+	FIX:           
+	               mov         ax, 213
+	END:           
 	               to_string   auxCadena
 	               popRecords
 	               saveOnArray auxCadena, listaPunteos
